@@ -1,0 +1,85 @@
+# =============================================================================
+# Hidden Gift -- .gitignore
+# =============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+playwright/.cache/
+test-results/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.tsbuildinfo
+next-env.d.ts
+
+# Misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Local env files -- NEVER COMMIT
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Vercel
+.vercel
+.vercel-cache
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+*.swo
+
+# Supabase
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# Trigger.dev
+.trigger/
+
+# Sentry
+.sentryclirc
+
+# Turbo
+.turbo
+
+# Bundle analyzer
+.next/analyze/
+
+# OS
+.cache/

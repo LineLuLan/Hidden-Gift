@@ -1,0 +1,32 @@
+# Hidden Gift -- CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Format: <pattern> <owner1> <owner2> ...
+# Tip: Add @FE-Dev real username sau khi onboard FE Dev.
+
+# Default fallback -- BE Lead reviews mọi thứ chưa map
+*                       @LineLuLan
+
+# Backend & infrastructure -> BE Lead
+/lib/                   @LineLuLan
+/supabase/              @LineLuLan
+/trigger/               @LineLuLan
+/app/api/               @LineLuLan
+/.github/               @LineLuLan
+/docs/                  @LineLuLan
+*.config.ts             @LineLuLan
+*.config.mjs            @LineLuLan
+*.config.js             @LineLuLan
+
+# Frontend -> FE Dev (placeholder -- replace @FE-Dev with real username)
+/app/(auth)/            @FE-Dev
+/app/(app)/             @FE-Dev
+/app/(marketing)/       @FE-Dev
+/components/            @FE-Dev
+/public/                @FE-Dev
+/styles/                @FE-Dev
+
+# Shared docs -- both review
+/CLAUDE.md              @LineLuLan @FE-Dev
+/README.md              @LineLuLan @FE-Dev
+/package.json           @LineLuLan @FE-Dev
