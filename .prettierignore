@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+dist
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+*.min.js
+*.min.css
+.trigger
+.vercel
+supabase/.branches
+supabase/.temp

@@ -1,0 +1,13 @@
+-- Hidden Gift -- seed data
+-- Run order:
+--   1. Migrations 001_initial_schema.sql -> 002_rls_policies.sql -> 003_indexes.sql
+--   2. This seed file (gift_ideas curated data)
+--
+-- This file is sourced by `supabase db reset` or manually via psql.
+-- Keep idempotent: use INSERT ... ON CONFLICT DO NOTHING or TRUNCATE-first.
+
+-- TODO Phase 2: seed 200 curated gift ideas. See lib/data/gift-ideas.ts.
+-- Example shape:
+-- INSERT INTO public.gift_ideas (title, description, category, occasion, price_min, price_max, persona_fit, emoji)
+-- VALUES ('Vong tay handmade', 'Tang nguoi ay vao dip ky niem', 'ky-niem', ARRAY['anniversary'], 50000, 200000, ARRAY['student'], '...')
+-- ON CONFLICT DO NOTHING;
