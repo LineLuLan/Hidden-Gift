@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Gift, Mail, Image, Bell, Home, LogOut, Settings, Sparkles } from "lucide-react";
+import {
+  Heart,
+  Gift,
+  Mail,
+  Image,
+  Bell,
+  Home,
+  LogOut,
+  Settings,
+  Sparkles,
+  Flower2,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -14,7 +25,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const NAV: NavItem[] = [
+const COUPLE_NAV: NavItem[] = [
   { href: "/", label: "Trang chủ", icon: Home },
   { href: "/wishes", label: "Điều ước", icon: Heart },
   { href: "/secrets", label: "Bí mật", icon: Gift },
@@ -24,15 +35,26 @@ const NAV: NavItem[] = [
   { href: "/gift-ideas", label: "Gợi ý quà", icon: Sparkles },
 ];
 
+const SOLO_NAV: NavItem[] = [
+  { href: "/", label: "Trang chủ", icon: Home },
+  { href: "/crush", label: "Crush", icon: Flower2 },
+  { href: "/wishes", label: "Điều ước", icon: Heart },
+  { href: "/memories", label: "Kỷ niệm", icon: Image },
+  { href: "/gift-ideas", label: "Gợi ý quà", icon: Sparkles },
+];
+
 interface AppShellProps {
   displayName: string;
   children: React.ReactNode;
+  /** Account kind drives nav set (solo hides couple-only features). */
+  kind?: "solo" | "couple" | "squad" | "family";
   /** Rendered next to user info in sidebar + mobile topbar. */
   notificationSlot?: React.ReactNode;
 }
 
-export function AppShell({ displayName, children, notificationSlot }: AppShellProps) {
+export function AppShell({ displayName, children, kind, notificationSlot }: AppShellProps) {
   const pathname = usePathname();
+  const NAV = kind === "solo" ? SOLO_NAV : COUPLE_NAV;
 
   return (
     <div className="bg-background flex min-h-screen">
