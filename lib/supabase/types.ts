@@ -356,6 +356,14 @@ export type Database = {
         Args: { p_account_id: string };
         Returns: boolean;
       };
+      accept_invite: {
+        Args: { p_code: string };
+        Returns: { joined_account_id: string; joined_role: string }[];
+      };
+      rotate_invite_code: {
+        Args: { p_account_id: string; p_new_code: string };
+        Returns: string;
+      };
     };
     Enums: {
       [_ in never]: never;
