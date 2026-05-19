@@ -5,7 +5,7 @@
 -- ─── Extensions ────────────────────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ─── Helper functions ──────────────────────────────────────────────────────
+-- ─── Helper functions (table-independent) ─────────────────────────────────
 
 -- Auto-update updated_at on row UPDATE
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -18,20 +18,7 @@ BEGIN
 END;
 $$;
 
--- Check if current user belongs to an account
-CREATE OR REPLACE FUNCTION public.is_account_member(p_account_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.account_members
-    WHERE account_id = p_account_id
-      AND user_id = (SELECT auth.uid())
-  );
-$$;
+-- is_account_member function defined AFTER tables (depends on account_members)
 
 -- ─── Tables ────────────────────────────────────────────────────────────────
 
@@ -162,6 +149,23 @@ CREATE TABLE public.gift_ideas (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 COMMENT ON TABLE public.gift_ideas IS 'Curated gift catalog. Public read, no RLS. Replaces AI-generated suggestions (CLAUDE.md Decision #1).';
+
+-- ─── Helper functions (table-dependent) ───────────────────────────────────
+
+-- Check if current user belongs to an account
+CREATE OR REPLACE FUNCTION public.is_account_member(p_account_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.account_members
+    WHERE account_id = p_account_id
+      AND user_id = (SELECT auth.uid())
+  );
+$$;
 
 -- ─── Triggers: updated_at ──────────────────────────────────────────────────
 
