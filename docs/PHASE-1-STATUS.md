@@ -1,153 +1,176 @@
 # Phase 1 Status — Wake-up Summary
 
-> Tóm tắt build session 2026-05-19. Đọc khi dậy để nắm Phase 1 đang ở đâu.
+> Cập nhật build session 2026-05-19. Đọc khi dậy để nắm Phase 1 + 1.5 đang ở đâu.
 
 ---
 
 ## TL;DR
 
-- ✅ **Build pass**: `pnpm build` thành công, 15 routes compile, 0 typecheck / lint errors.
-- ✅ **Wishes feature end-to-end**: signup → login → tạo wish → toggle/edit/xoá. Free tier cap 5 active wishes.
-- ✅ **Auth**: email/password + Google OAuth (Google nút chỉ hiện nếu env có key).
-- ✅ **5 migrations** sẵn sàng push (chưa push remote — cần BE Lead chạy `pnpm supabase db push`).
-- ✅ **9 commits**, mỗi commit theo conventional commits, split đúng branch be/fe per CODEOWNERS.
-- 🟡 **4 placeholders**: secrets/letters/memories/pings hiện "Coming Soon" — chờ partner-invite flow + service keys.
+**Phase 1 Couple Core — 5/5 features hoàn thành.** Memories vẫn placeholder (chờ R2 keys).
 
-**Decision pivot quan trọng**: dùng Supabase Auth thay vì Better-Auth (xem `docs/DECISIONS.md` ADR-002). User confirmed qua AskUserQuestion. Better-Auth dep giữ trong package.json deferred remove Phase 2.
+- ✅ Foundation: env + Supabase clients + Auth + 7 migrations applied lên remote
+- ✅ Wishes: CRUD đầy đủ, free-tier cap 5, RLS user-private verified
+- ✅ Partner Invite: SQL RPC `accept_invite` atomic, UI `/settings` + `/invite/[code]`, smoke test pass
+- ✅ Secrets: asymmetric visibility (RLS tested), prepare/ready/deliver flow, recipient_id auto = partner
+- ✅ Emoji Pings: send + realtime listener (Supabase Realtime channel) toast khi partner gửi
+- ✅ Letters: compose/schedule/manual-deliver, body JSONB future-compat Tiptap
+- 🟡 Memories: placeholder page, gates behind `features.r2`
+
+**Build status**: `pnpm build` PASS — 22 routes, 0 typecheck / lint errors. `pnpm dev` ready in ~1s.
+
+---
+
+## Routes (22 total)
+
+```
+ƒ /                          → dashboard (auth-gated)
+ƒ /login                     → email/password + Google OAuth
+ƒ /signup                    → tạo tài khoản
+ƒ /verify                    → chờ confirm email
+ƒ /auth/callback             → OAuth code exchange
+ƒ /auth/signout              → POST signout
+ƒ /invite/[code]             → public invite landing (anon-OK via admin lookup)
+ƒ /settings                  → account + invite code generation
+ƒ /wishes                    → list (5-cap badge)
+ƒ /wishes/new                → tạo wish
+ƒ /wishes/[id]/edit          → sửa wish
+ƒ /secrets                   → 3-section list (preparing/sent/received)
+ƒ /secrets/new               → chuẩn bị bí mật cho partner
+ƒ /secrets/[id]/edit         → sửa secret (chỉ preparer)
+ƒ /letters                   → 4-section list (drafts/scheduled/sent/received)
+ƒ /letters/new               → viết thư (subject + body + scheduled_for)
+ƒ /letters/[id]              → đọc thư (sender luôn / recipient sau delivery)
+ƒ /letters/[id]/edit         → sửa draft hoặc scheduled (block sau delivery)
+ƒ /pings                     → composer + history với mark-all-read
+ƒ /memories                  → placeholder (cần R2)
+```
 
 ---
 
 ## Việc cần BE Lead làm khi dậy
 
-### 1. Apply migrations lên remote Supabase project
+### 1. (DONE qua AI) 7 migrations đã apply lên `ylssxjbmiwxpcpbemftm`
 
-```bash
-pnpm supabase login                      # interactive, mở browser
-pnpm supabase link --project-ref ylssxjbmiwxpcpbemftm
-pnpm supabase db push                    # đẩy 5 migrations lên remote
-pnpm db:types                            # regen lib/supabase/types.ts khớp schema thực
+```
+20260519000001_initial_schema.sql      ✓
+20260519000002_rls_policies.sql        ✓
+20260519000003_indexes.sql             ✓
+20260519000004_realtime.sql            ✓
+20260519000005_account_helper.sql      ✓
+20260519000006_accept_invite.sql       ✓
+20260519000007_fix_accept_invite.sql   ✓
 ```
 
-Sau bước này → có thể `pnpm dev` và test login/signup thật.
-
-### 2. Cấu hình Supabase Auth Dashboard
-
-Vào https://supabase.com/dashboard/project/ylssxjbmiwxpcpbemftm/auth/providers:
-
-- **Email provider**: enable, set "Confirm email" = on (default OK)
-- **Google provider**: enable, paste `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` từ `.env.local`
-- **URL Configuration** → Redirect URLs: thêm `http://localhost:3000/auth/callback`
-
-### 3. Test end-to-end flow
+### 2. Test end-to-end
 
 ```bash
 pnpm dev
-# Mở http://localhost:3000 -> redirect /login (vì chưa auth)
-# Đăng ký mới qua /signup -> check email -> click link -> redirect dashboard
-# Hoặc click "Tiếp tục với Google" -> Google consent -> redirect dashboard
-# Vào /wishes -> tạo 5 wishes -> wish thứ 6 báo lỗi cap
-# Toggle fulfilled / edit / delete đều work
+# Mở http://localhost:3000 -> redirect /login
 ```
 
-### 4. Tiếp theo (Phase 1.5)
+Smoke flow:
 
-Còn 4 feature placeholder chờ build. Theo thứ tự priority:
+1. Alice tạo account qua `/signup` (email/password hoặc Google)
+2. Alice tạo wish ở `/wishes`
+3. Alice vào `/settings` → bấm "Tạo mã mời" → copy link
+4. Mở browser khác (incognito): Bob signup → mở link mời → "Nhận lời mời"
+5. Verify cả 2 ở chung account (member list `/settings`)
+6. Alice tạo bí mật `/secrets/new` cho Bob → status "Đang chuẩn bị"
+7. Verify Bob không thấy bí mật ở `/secrets` (chưa deliver)
+8. Alice bấm "Tặng ngay" → Bob refresh `/secrets` → thấy bí mật ở mục "Bạn nhận được"
+9. Alice viết thư `/letters/new` schedule 5 phút sau → "Lên lịch gửi"
+10. Đợi 5 phút → Alice vào `/letters` → bấm "Giao ngay" → Bob thấy thư
+11. Alice + Bob mở 2 tab `/pings` → Alice send 💝 → Bob thấy toast realtime + entry trong list
 
-1. **Partner invite flow**: tạo invite code → partner accept → upgrade solo → couple account. Đây là blocker cho 3 feature dưới.
-2. **Secrets** (sau invite): asymmetric visibility, RLS đã ready, chỉ cần UI compose + reveal flow.
-3. **Letters** (sau invite + Trigger.dev): Tiptap compose + schedule + delivery job.
-4. **Memories** (sau invite + R2): R2 presigned upload + gallery.
-5. **Emoji Pings** (sau invite): Supabase Realtime subscription, đã enable ở migration 004.
+### 3. Memories (defer)
 
----
+Cần Cloudflare R2 keys (docs/API-KEYS-GUIDE.md §4). Sau khi `.env.local` có:
 
-## Files mới/sửa (cho code review)
+- `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL`
 
-### Migrations (BE branch)
+Code `features.r2` = true → unlock UI. Code chưa wire upload presigned URL — Phase 1.5 implementation (xem memory về iPhone HEIC handling).
 
-- `supabase/migrations/20260519000001_initial_schema.sql` — 8 tables + triggers
-- `supabase/migrations/20260519000002_rls_policies.sql` — RLS với `(SELECT auth.uid())` pattern
-- `supabase/migrations/20260519000003_indexes.sql` — performance indexes
-- `supabase/migrations/20260519000004_realtime.sql` — Supabase Realtime publication
-- `supabase/migrations/20260519000005_account_helper.sql` — `my_account` view
+### 4. Letter auto-delivery (defer)
 
-### Backend (BE branch)
-
-- `lib/env.ts` — Zod env + feature flags (preprocess empty → undefined)
-- `lib/supabase/{client,server,admin,middleware,types}.ts` — SSR clients
-- `lib/auth/{server,actions,schema}.ts` — Supabase Auth helpers + server actions
-- `lib/wishes/{schema,queries,actions}.ts` — Wishes CRUD logic
-- `lib/utils/{cn,format}.ts` — class merger + VN-friendly formatters
-- `app/auth/{callback,signout}/route.ts` — OAuth callback + signout
-- `proxy.ts` — middleware refreshes Supabase session
-
-### Frontend (FE branch)
-
-- `app/(auth)/{layout,login,signup,verify}/page.tsx`
-- `app/(app)/{layout,page}.tsx` — protected shell + home dashboard
-- `app/(app)/wishes/{page,new,[id]/edit}/page.tsx` — wishes feature
-- `app/(app)/{secrets,letters,memories,pings}/page.tsx` — Coming Soon placeholders
-- `components/ui/{button,input,label,textarea,card,skeleton,alert,sonner}.tsx` — shadcn primitives
-- `components/auth/{login-form,signup-form,google-button}.tsx`
-- `components/layouts/app-shell.tsx` — sidebar + mobile nav
-- `components/wishes/{wish-card,wish-form,wish-list}.tsx`
-- `components/shared/coming-soon.tsx` — reusable empty state
-- `app/globals.css` — Tailwind v4 @theme extended cho shadcn tokens
-
-### Docs
-
-- `docs/API-KEYS-GUIDE.md` — hướng dẫn đăng ký 9 service (NEW)
-- `docs/DECISIONS.md` — append ADR-002 (Supabase Auth pivot)
-- `docs/CHECKLIST.md` — Phase 0/1 progress updated
-- `docs/PHASE-1-STATUS.md` — file này
+Hiện sender phải bấm "Giao ngay" manual sau scheduled_for. Tự động cần Trigger.dev job query `letters WHERE scheduled_for <= NOW() AND delivered_at IS NULL AND is_draft = false` mỗi phút. File `trigger/letter-delivery.ts` chưa viết. Phase 1.5 khi user cung cấp Trigger.dev keys.
 
 ---
 
-## Đã skip / chưa làm có chủ đích
+## Architecture decisions
 
-- **Better-Auth wire**: deferred (ADR-002), nếu cần multi-tenancy advanced thì revisit Phase 2
-- **Marketing landing public**: `/` redirect /login khi unauth. Public landing có thể add ở `/welcome` sau
-- **`pnpm db:types` regen**: hand-written types đã match migrations, regen sau khi push migrations
-- **RLS Vitest test**: cần Supabase test framework, viết Phase 1.5
-- **Sentry / PostHog wiring**: stub có sẵn (`instrumentation.ts`), wire khi user provide keys
-- **Resend email**: server action `signUpWithEmail` set redirect, nhưng Supabase tự gửi confirmation email — không cần Resend cho signup verify. Resend dùng cho letter delivery (Phase 1.5)
-- **Trigger.dev jobs**: skeleton `trigger.config.ts` có, jobs viết Phase 1.5 cùng Letters
-- **Rate limit / Upstash**: deferred, chạy in-memory tạm
+- **Supabase Auth thay Better-Auth** — ADR-002 trong `docs/DECISIONS.md`. RLS `auth.uid()` work native.
+- **Hand-written Database types** — `lib/supabase/types.ts` chứa toàn bộ schema thay vì gen. Khi user có Docker, chạy `pnpm db:types` để regen từ remote.
+- **No Database generic on createServerClient** — supabase-js v2 default fallback `Schema = never` khi Database không satisfy GenericSchema constraint, gây ambiguous .from(). Bỏ generic, query results untyped và cast manually.
+- **Realtime per-row filter via RLS** — channel filter `recipient_id=eq.<userId>` + RLS double-check.
+- **Wishes account_id migrates on invite accept** — `accept_invite` Postgres function moves user's wishes to target account atomically.
+- **Plain textarea cho letter body** — Tiptap dep installed nhưng deferred wire. Body JSONB `{type:"text",content}` so future swap non-breaking.
 
 ---
 
-## Test khi dậy (manual smoke)
+## Files mới chính (cho code review)
 
-```bash
-# 1. Build pass
-pnpm build                # phải success
+### BE
 
-# 2. Typecheck pass
-pnpm typecheck            # 0 errors
+- `lib/account/{queries,actions}.ts` — invite generation + acceptance
+- `lib/wishes/{schema,queries,actions}.ts`
+- `lib/secrets/{schema,queries,actions}.ts`
+- `lib/letters/{schema,queries,actions}.ts`
+- `lib/pings/{schema,queries,actions}.ts`
+- `supabase/migrations/20260519000006_accept_invite.sql`
+- `supabase/migrations/20260519000007_fix_accept_invite.sql`
 
-# 3. Lint pass
-pnpm lint                 # 0 errors
+### FE
 
-# 4. Dev server
-pnpm dev                  # mở http://localhost:3000
-# Note: nếu chưa push migrations + chưa enable Google provider trong Supabase Dashboard,
-# signup sẽ fail. Apply migrations + config provider trước.
-
-# 5. After migrations applied:
-# - /signup tạo tài khoản mới với email/password
-# - Check Supabase Dashboard auth.users + accounts + account_members → có 1 row mỗi bảng
-# - /login với account vừa tạo
-# - /wishes → tạo 1 wish → list show ngay (revalidatePath work)
-# - SELECT * FROM wishes trong Supabase Studio → wish hiện đúng owner
-```
+- `app/(app)/settings/page.tsx`
+- `app/invite/[code]/page.tsx`
+- `app/(app)/{wishes,secrets,letters,pings}/{page,new,[id]/edit}.tsx`
+- `app/(app)/letters/[id]/page.tsx` (read view)
+- `components/{account,wishes,secrets,letters,pings}/`
+- `components/shared/coming-soon.tsx`
 
 ---
 
-## Git log
+## Cost summary
+
+Phase 1 dùng:
+
+- Supabase free tier (1 project, 1 active connection at a time)
+- Google OAuth free
+
+Phase 1.5 sẽ cần:
+
+- Trigger.dev free (letter delivery cron) — 100K runs/mo
+- Cloudflare R2 free (memories upload) — 10GB
+- Resend free (email notifications) — 3K/mo
+- Upstash Redis free (rate limit) — 10K commands/day
+
+Tổng Phase 1-2 launch chi phí dự kiến: ~$20/mo (chỉ Vercel Pro nếu prod traffic).
+
+---
+
+## Git log (cập nhật)
 
 ```
-d06ad32 chore: merge fe placeholder pages for nav completeness
-9863c8e feat(ui): coming-soon placeholder pages for secrets/letters/memories/pings
+a4267aa chore: merge letters UI to dev
+79ed52b feat(letters-ui): compose / schedule / deliver scheduled letters
+82a7643 chore: merge be letters lib
+9e48749 feat(be): letters lib — save draft/schedule, manual deliver, delete
+aa8b002 chore: merge fe pings UI + realtime
+24f3dd9 feat(pings-ui): emoji ping composer + list + realtime listener
+fc12f21 chore: merge be pings lib
+6852d53 feat(be): emoji pings — send/mark read server actions + queries
+6db834a chore: merge fe secrets UI
+4e3f61b feat(secrets-ui): prepare/list/edit secret with asymmetric visibility
+cc12e10 chore: merge be secrets lib
+fd640e8 feat(be): secrets server actions + queries
+03c28d4 chore: merge fe partner invite UI
+89ab4e9 feat(invite): partner invite UI + auth next= flow
+98e1fcb chore: merge be partner invite flow
+750d09c feat(be): partner invite flow — accept_invite RPC + server actions
+690800f chore: merge be migration ordering fix
+a6c442a fix(db): order is_account_member function AFTER tables in migration 001
+fb97968 chore: merge be phase 1 status docs
+5e3435b docs: phase 1 status + checklist update
 be40784 chore: merge be env validation fix
 ecefe9a fix(be): env validation accepts empty strings for optional URL fields
 85d6a94 chore: merge fe auth + app shell + wishes UI
@@ -159,8 +182,6 @@ bea35c4 feat(ui): auth pages + app shell + wishes feature end-to-end
 d922f9f chore: merge be phase 1 backend foundation into dev
 58262a8 feat(be): phase 1 supabase auth + db foundation
 d5992ff feat: phase 0 scaffold -- next.js 16 + tooling + folder structure
-f0bb202 chore: add phase 0 docs, env example, and github plumbing
-3606124 Initial commit
 ```
 
-All commits on `be`, `fe`, `dev` (sync'd). `main` untouched per workflow.
+29 feature/chore commits + scaffold + initial. All on dev (synced be + fe), origin/main untouched.
