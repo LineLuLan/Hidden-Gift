@@ -90,6 +90,39 @@ export async function acceptInvite(code: string): Promise<AccountActionResult> {
   };
 }
 
+/** Update caller's display_name in their account_members row. */
+export async function updateProfile(
+  _prev: AccountActionResult | null,
+  formData: FormData,
+): Promise<AccountActionResult> {
+  const raw = formData.get("displayName");
+  const displayName = typeof raw === "string" ? raw.trim() : "";
+  if (displayName.length < 1) {
+    return { ok: false, error: "Vui lòng nhập tên hiển thị" };
+  }
+  if (displayName.length > 50) {
+    return { ok: false, error: "Tên tối đa 50 ký tự" };
+  }
+
+  const user = await requireUser();
+  const account = await requireAccount();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("account_members")
+    .update({ display_name: displayName })
+    .eq("account_id", account.accountId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { ok: false, error: `Không lưu được: ${error.message}` };
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/settings");
+  return { ok: true };
+}
+
 function mapInviteError(raw: string): string {
   if (raw.includes("NOT_AUTHENTICATED")) return "Bạn cần đăng nhập trước";
   if (raw.includes("INVITE_NOT_FOUND")) return "Mã mời không tồn tại hoặc đã hết hạn";
