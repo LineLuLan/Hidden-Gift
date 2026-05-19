@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layouts/app-shell";
-import { PingListener } from "@/components/pings/ping-listener";
+import { RealtimeToasts } from "@/components/shared/realtime-toasts";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
 
@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <AppShell displayName={displayName ?? "Bạn"}>
-      {partner ? <PingListener userId={user.id} partnerName={partnerName} /> : null}
+      {partner ? <RealtimeToasts userId={user.id} partnerName={partnerName} /> : null}
       {children}
     </AppShell>
   );
