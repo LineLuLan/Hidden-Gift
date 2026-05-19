@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Gift, Mail, Image, Bell, Home, LogOut, Settings } from "lucide-react";
+import { Heart, Gift, Mail, Image, Bell, Home, LogOut, Settings, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
   { href: "/letters", label: "Thư hẹn giờ", icon: Mail },
   { href: "/memories", label: "Kỷ niệm", icon: Image },
   { href: "/pings", label: "Ping", icon: Bell },
+  { href: "/gift-ideas", label: "Gợi ý quà", icon: Sparkles },
 ];
 
 interface AppShellProps {

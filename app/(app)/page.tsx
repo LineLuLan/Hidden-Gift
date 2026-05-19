@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Gift, Mail, Image, Bell, Users } from "lucide-react";
+import { Heart, Gift, Mail, Image, Bell, Users, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,13 @@ const FEATURES: Feature[] = [
     title: "Kỷ niệm",
     description: "Album ảnh + video chung. iPhone HEIC tự convert, resize 2048px.",
     icon: Image,
+    status: "always",
+  },
+  {
+    href: "/gift-ideas",
+    title: "Gợi ý quà",
+    description: "30+ ý tưởng quà tuyển chọn cho couple VN, lọc theo dịp + ngân sách.",
+    icon: Sparkles,
     status: "always",
   },
 ];
