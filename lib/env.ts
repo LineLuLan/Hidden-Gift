@@ -85,14 +85,26 @@ function formatErrors(error: z.ZodError) {
   return error.errors.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
 }
 
-const parsedServer = serverSchema.safeParse(process.env);
-if (!parsedServer.success) {
-  console.error(
-    "\n❌ Invalid server environment variables:\n" +
-      formatErrors(parsedServer.error) +
-      "\n\nCheck .env.local against .env.example. See docs/API-KEYS-GUIDE.md.\n",
-  );
-  throw new Error("Missing required environment variables");
+// Server schema only parses on server runtime; client bundle skips it because
+// SUPABASE_SERVICE_ROLE_KEY and friends are server-only and would be `undefined`
+// in the browser, breaking pages that import this module for NEXT_PUBLIC_* values.
+const isServer = typeof window === "undefined";
+let serverData: z.infer<typeof serverSchema>;
+if (isServer) {
+  const parsed = serverSchema.safeParse(process.env);
+  if (!parsed.success) {
+    console.error(
+      "\n❌ Invalid server environment variables:\n" +
+        formatErrors(parsed.error) +
+        "\n\nCheck .env.local against .env.example. See docs/API-KEYS-GUIDE.md.\n",
+    );
+    throw new Error("Missing required environment variables");
+  }
+  serverData = parsed.data;
+} else {
+  // Stub for client bundles. Files that import server-only fields are gated
+  // by `import "server-only"` and never execute in this branch.
+  serverData = {} as z.infer<typeof serverSchema>;
 }
 
 const parsedClient = clientSchema.safeParse({
@@ -110,7 +122,7 @@ if (!parsedClient.success) {
   throw new Error("Missing required NEXT_PUBLIC_* environment variables");
 }
 
-const serverEnv = parsedServer.data;
+const serverEnv = serverData;
 const clientEnv = parsedClient.data;
 
 // ─── Feature flags (derived) ───────────────────────────────────────────────
