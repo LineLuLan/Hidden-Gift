@@ -34,8 +34,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Touch the session so cookies refresh; result intentionally ignored.
-  await supabase.auth.getUser();
+  // Touch the session so cookies refresh; user returned for routing decisions.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  return { response, user };
 }
