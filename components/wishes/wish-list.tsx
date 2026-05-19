@@ -8,9 +8,10 @@ import { FREE_TIER_WISH_LIMIT, type Wish } from "@/lib/wishes/queries";
 
 interface WishListProps {
   wishes: Wish[];
+  displayName?: string;
 }
 
-export function WishList({ wishes }: WishListProps) {
+export function WishList({ wishes, displayName }: WishListProps) {
   const activeCount = wishes.filter((w) => !w.is_fulfilled).length;
   const canCreate = activeCount < FREE_TIER_WISH_LIMIT;
 
@@ -65,6 +66,7 @@ export function WishList({ wishes }: WishListProps) {
           {wishes.map((wish) => (
             <WishCard
               key={wish.id}
+              displayName={displayName}
               wish={{
                 id: wish.id,
                 title: wish.title,
