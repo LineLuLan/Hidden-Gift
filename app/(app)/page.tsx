@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Gift, Mail, Image, Bell, Users, Sparkles } from "lucide-react";
+import { Heart, Gift, Mail, Image, Bell, Users, Sparkles, Flower2 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,11 @@ interface Feature {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  /** "always" | "couple" (gated on partner linked) | "soon" (placeholder). */
-  status: "always" | "couple" | "soon";
+  /** "always" | "couple" (gated on partner) | "solo" (only for Solo mode) | "soon" */
+  status: "always" | "couple" | "solo" | "soon";
 }
 
-const FEATURES: Feature[] = [
+const COUPLE_FEATURES: Feature[] = [
   {
     href: "/wishes",
     title: "Điều ước",
@@ -60,14 +60,48 @@ const FEATURES: Feature[] = [
   },
 ];
 
+const SOLO_FEATURES: Feature[] = [
+  {
+    href: "/crush",
+    title: "Solo Crush",
+    description: "Crush profile + nhật ký riêng tư + đếm ngược. Hoàn toàn private.",
+    icon: Flower2,
+    status: "always",
+  },
+  {
+    href: "/wishes",
+    title: "Wishlist",
+    description: "Điều ước cho bản thân. Sau này tỏ tình thành công có thể share.",
+    icon: Heart,
+    status: "always",
+  },
+  {
+    href: "/memories",
+    title: "Kỷ niệm",
+    description: "Lưu khoảnh khắc với crush. iPhone HEIC tự convert.",
+    icon: Image,
+    status: "always",
+  },
+  {
+    href: "/gift-ideas",
+    title: "Gợi ý quà",
+    description: "30+ ý tưởng để tặng crush khi đúng dịp.",
+    icon: Sparkles,
+    status: "always",
+  },
+];
+
 export default async function HomePage() {
   const user = await requireUser();
   const account = await requireAccount();
   const detail = await getAccountDetail(account.accountId);
   const linked = detail ? isPartnerLinked(detail) : false;
+  const isSolo = account.kind === "solo";
 
   const greeting =
     (user.user_metadata?.display_name as string | undefined) ?? user.email?.split("@")[0] ?? "bạn";
+
+  const FEATURES = isSolo ? SOLO_FEATURES : COUPLE_FEATURES;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -75,11 +109,13 @@ export default async function HomePage() {
         <p className="text-muted-foreground text-sm">Chào</p>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{greeting} ơi 💝</h1>
         <p className="text-muted-foreground max-w-xl">
-          Bí mật yêu thương được lưu trữ an toàn ngay trên database. Bắt đầu với một điều ước nhỏ.
+          {isSolo
+            ? "Solo mode — chỉ bạn và crush. Riêng tư tuyệt đối."
+            : "Bí mật yêu thương được lưu trữ an toàn ngay trên database. Bắt đầu với một điều ước nhỏ."}
         </p>
       </header>
 
-      {!linked ? (
+      {!isSolo && !linked ? (
         <Card>
           <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
@@ -89,13 +125,39 @@ export default async function HomePage() {
               <div>
                 <p className="font-medium">Mời partner để mở khoá Bí mật, Thư hẹn giờ, Ping</p>
                 <p className="text-muted-foreground text-sm">
-                  Bạn có thể tạo điều ước riêng ngay. Các tính năng couple cần 2 người.
+                  Hoặc{" "}
+                  <Link href="/crush" className="text-primary hover:underline">
+                    chuyển sang Solo mode
+                  </Link>{" "}
+                  nếu đang crush thầm.
                 </p>
               </div>
             </div>
             <Button asChild>
               <Link href="/settings">Mời partner</Link>
             </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {isSolo ? (
+        <Card>
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="bg-accent text-primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <Flower2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Solo Crush mode đã bật</p>
+                <p className="text-muted-foreground text-sm">
+                  Tỏ tình thành công?{" "}
+                  <Link href="/crush" className="text-primary hover:underline">
+                    Chuyển sang Couple mode
+                  </Link>{" "}
+                  để mời người ấy.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : null}
