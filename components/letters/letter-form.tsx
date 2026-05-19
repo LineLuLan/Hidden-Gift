@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LetterEditor } from "@/components/letters/letter-editor";
 import { saveLetter, type LetterActionResult } from "@/lib/letters/actions";
 
 interface LetterFormProps {
@@ -18,7 +18,8 @@ interface LetterFormProps {
   defaultValues?: {
     id?: string;
     subject?: string;
-    bodyText?: string;
+    /** Tiptap JSON doc or legacy {type:"text",content:string}. */
+    body?: unknown;
     scheduledFor?: string;
     isDraft?: boolean;
   };
@@ -71,14 +72,10 @@ export function LetterForm({ mode, recipientId, recipientName, defaultValues }: 
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="body">Nội dung</Label>
-        <Textarea
-          id="body"
+        <Label>Nội dung</Label>
+        <LetterEditor
           name="body"
-          required
-          rows={12}
-          maxLength={20000}
-          defaultValue={defaultValues?.bodyText ?? ""}
+          defaultValue={defaultValues?.body}
           placeholder="Viết lời gửi tương lai..."
         />
         {state?.fieldErrors?.body?.[0] ? (

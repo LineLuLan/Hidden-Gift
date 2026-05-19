@@ -6,6 +6,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { extractDocText } from "@/lib/letters/schema";
 
 export interface Letter {
   id: string;
@@ -13,8 +14,8 @@ export interface Letter {
   sender_id: string;
   recipient_id: string;
   subject: string;
-  /** JSON shape: {type: "text", content: string}. Store as-is. */
-  body: { type?: string; content?: string } | unknown;
+  /** Tiptap doc JSON ({type:"doc",content:[...]}) or legacy {type:"text",content:string}. */
+  body: unknown;
   scheduled_for: string;
   delivered_at: string | null;
   is_draft: boolean;
@@ -41,11 +42,15 @@ export async function getLetter(id: string): Promise<Letter | null> {
   return (data as unknown as Letter | null) ?? null;
 }
 
-/** Extract plain-text body content. Letter body stored as {type:"text",content:string}. */
+/**
+ * Extract plain-text body content for previews. Handles both Tiptap docs and
+ * the legacy {type:"text",content:string} wrapper.
+ */
 export function getLetterText(letter: Letter): string {
-  if (typeof letter.body === "object" && letter.body !== null && "content" in letter.body) {
-    const c = (letter.body as { content?: string }).content;
-    return typeof c === "string" ? c : "";
-  }
+  const body = letter.body;
+  if (typeof body !== "object" || body === null) return "";
+  const obj = body as { type?: string; content?: unknown };
+  if (obj.type === "doc") return extractDocText(body);
+  if (obj.type === "text" && typeof obj.content === "string") return obj.content;
   return "";
 }

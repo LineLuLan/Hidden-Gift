@@ -6,8 +6,9 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, getPartner } from "@/lib/account/queries";
-import { getLetter, getLetterText } from "@/lib/letters/queries";
+import { getLetter } from "@/lib/letters/queries";
 import { formatDateTime } from "@/lib/utils/format";
+import { LetterContent } from "@/components/letters/letter-content";
 
 export const metadata: Metadata = { title: "Đọc thư" };
 
@@ -53,9 +54,7 @@ export default async function LetterReadPage({ params }: LetterReadPageProps) {
           </p>
         </CardHeader>
         <CardContent>
-          <article className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-            {getLetterText(letter)}
-          </article>
+          <LetterContent body={letter.body} />
         </CardContent>
       </Card>
     </div>
