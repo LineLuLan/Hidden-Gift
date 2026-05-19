@@ -32,6 +32,8 @@ export interface AccountContext {
   accountId: string;
   role: "owner" | "partner" | "member";
   displayName: string | null;
+  kind: "solo" | "couple" | "squad" | "family";
+  onboardedAt: string | null;
 }
 
 /**
@@ -46,7 +48,7 @@ export async function getCurrentAccount(): Promise<AccountContext | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("account_members")
-    .select("account_id, role, display_name")
+    .select("account_id, role, display_name, accounts(kind, onboarded_at)")
     .eq("user_id", user.id)
     .order("joined_at", { ascending: true })
     .limit(1)
@@ -61,10 +63,15 @@ export async function getCurrentAccount(): Promise<AccountContext | null> {
     );
   }
 
+  const accountInfo = (data as { accounts?: { kind?: string; onboarded_at?: string | null } })
+    .accounts;
+
   return {
     accountId: data.account_id as string,
     role: data.role as AccountContext["role"],
     displayName: (data.display_name as string | null) ?? null,
+    kind: (accountInfo?.kind as AccountContext["kind"]) ?? "couple",
+    onboardedAt: accountInfo?.onboarded_at ?? null,
   };
 }
 
