@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InviteCard } from "@/components/account/invite-card";
+import { ProfileForm } from "@/components/account/profile-form";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 
@@ -67,6 +68,18 @@ export default async function SettingsPage() {
               ) : null}
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tên hiển thị</CardTitle>
+          <CardDescription>
+            Đổi nickname của bạn trong couple. Partner sẽ thấy tên này trong ping, secrets, letters.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm currentDisplayName={userMember?.display_name ?? null} />
         </CardContent>
       </Card>
 
