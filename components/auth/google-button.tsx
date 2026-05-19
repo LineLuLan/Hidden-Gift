@@ -8,9 +8,10 @@ import { signInWithGoogle } from "@/lib/auth/actions";
 
 interface GoogleButtonProps {
   label?: string;
+  next?: string;
 }
 
-export function GoogleButton({ label = "Tiếp tục với Google" }: GoogleButtonProps) {
+export function GoogleButton({ label = "Tiếp tục với Google", next }: GoogleButtonProps) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -22,7 +23,7 @@ export function GoogleButton({ label = "Tiếp tục với Google" }: GoogleButt
       onClick={() => {
         startTransition(async () => {
           try {
-            await signInWithGoogle();
+            await signInWithGoogle(next);
           } catch (error) {
             const message = error instanceof Error ? error.message : "Lỗi đăng nhập Google";
             toast.error(message);

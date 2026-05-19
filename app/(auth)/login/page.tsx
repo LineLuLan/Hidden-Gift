@@ -7,9 +7,15 @@ import { features } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Đăng nhập" };
 
-export default async function LoginPage() {
-  const user = await getCurrentUser();
-  if (user) redirect("/");
+interface LoginPageProps {
+  searchParams: Promise<{ next?: string }>;
+}
 
-  return <LoginForm googleEnabled={features.googleAuth} />;
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const user = await getCurrentUser();
+  const { next } = await searchParams;
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  if (user) redirect(safeNext);
+
+  return <LoginForm googleEnabled={features.googleAuth} next={safeNext} />;
 }
