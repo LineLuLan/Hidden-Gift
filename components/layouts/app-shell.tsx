@@ -25,9 +25,11 @@ const NAV: NavItem[] = [
 interface AppShellProps {
   displayName: string;
   children: React.ReactNode;
+  /** Rendered next to user info in sidebar + mobile topbar. */
+  notificationSlot?: React.ReactNode;
 }
 
-export function AppShell({ displayName, children }: AppShellProps) {
+export function AppShell({ displayName, children, notificationSlot }: AppShellProps) {
   const pathname = usePathname();
 
   return (
@@ -62,8 +64,13 @@ export function AppShell({ displayName, children }: AppShellProps) {
           })}
         </nav>
         <div className="border-border space-y-2 border-t p-4">
-          <p className="text-muted-foreground px-3 text-xs">Xin chào</p>
-          <p className="px-3 text-sm font-medium">{displayName}</p>
+          <div className="flex items-center justify-between px-3">
+            <div>
+              <p className="text-muted-foreground text-xs">Xin chào</p>
+              <p className="text-sm font-medium">{displayName}</p>
+            </div>
+            {notificationSlot}
+          </div>
           <Button asChild variant="ghost" size="sm" className="w-full justify-start">
             <Link href="/settings">
               <Settings className="h-4 w-4" />
@@ -86,11 +93,14 @@ export function AppShell({ displayName, children }: AppShellProps) {
           <Link href="/" className="text-primary font-semibold">
             Hidden Gift
           </Link>
-          <form action="/auth/signout" method="post">
-            <Button type="submit" variant="ghost" size="icon" aria-label="Đăng xuất">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </form>
+          <div className="flex items-center gap-2">
+            {notificationSlot}
+            <form action="/auth/signout" method="post">
+              <Button type="submit" variant="ghost" size="icon" aria-label="Đăng xuất">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
         </header>
 
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>

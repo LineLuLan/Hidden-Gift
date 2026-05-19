@@ -1,15 +1,18 @@
 import Link from "next/link";
-import { Heart, Gift, Mail, Image, Bell } from "lucide-react";
+import { Heart, Gift, Mail, Image, Bell, Users } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth/server";
+import { Button } from "@/components/ui/button";
+import { requireAccount, requireUser } from "@/lib/auth/server";
+import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 
 interface Feature {
   href: string;
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  available: boolean;
+  /** "always" | "couple" (gated on partner linked) | "soon" (placeholder). */
+  status: "always" | "couple" | "soon";
 }
 
 const FEATURES: Feature[] = [
@@ -18,40 +21,44 @@ const FEATURES: Feature[] = [
     title: "Điều ước",
     description: "Ghi điều bạn mong nhận. Partner không thấy danh sách này — chỉ riêng bạn.",
     icon: Heart,
-    available: true,
+    status: "always",
   },
   {
     href: "/secrets",
     title: "Chuẩn bị bí mật",
     description: "Lên kế hoạch quà tặng cho partner. Bí mật cho tới ngày tặng.",
     icon: Gift,
-    available: false,
+    status: "couple",
   },
   {
     href: "/letters",
     title: "Thư hẹn giờ",
     description: "Viết thư giao vào ngày đã chọn. Sinh nhật, kỷ niệm, hay bất ngờ.",
     icon: Mail,
-    available: false,
+    status: "couple",
+  },
+  {
+    href: "/pings",
+    title: "Emoji Ping",
+    description: "Gửi tim cho partner trong nháy mắt. Cảm xúc tức thời, realtime.",
+    icon: Bell,
+    status: "couple",
   },
   {
     href: "/memories",
     title: "Kỷ niệm",
     description: "Album ảnh + video chung. Cùng nhau lưu giữ khoảnh khắc.",
     icon: Image,
-    available: false,
-  },
-  {
-    href: "/pings",
-    title: "Emoji Ping",
-    description: "Gửi tim cho partner trong nháy mắt. Cảm xúc tức thời.",
-    icon: Bell,
-    available: false,
+    status: "soon",
   },
 ];
 
 export default async function HomePage() {
   const user = await requireUser();
+  const account = await requireAccount();
+  const detail = await getAccountDetail(account.accountId);
+  const linked = detail ? isPartnerLinked(detail) : false;
+
   const greeting =
     (user.user_metadata?.display_name as string | undefined) ?? user.email?.split("@")[0] ?? "bạn";
 
@@ -65,15 +72,35 @@ export default async function HomePage() {
         </p>
       </header>
 
+      {!linked ? (
+        <Card>
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="bg-accent text-primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Mời partner để mở khoá Bí mật, Thư hẹn giờ, Ping</p>
+                <p className="text-muted-foreground text-sm">
+                  Bạn có thể tạo điều ước riêng ngay. Các tính năng couple cần 2 người.
+                </p>
+              </div>
+            </div>
+            <Button asChild>
+              <Link href="/settings">Mời partner</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature) => {
           const Icon = feature.icon;
+          const isOpen = feature.status === "always" || (feature.status === "couple" && linked);
+          const badge = feature.status === "soon" ? "Sắp ra mắt" : isOpen ? "Đã mở" : "Cần partner";
+
           const content = (
-            <Card
-              className={
-                feature.available ? "hover:border-primary/40 transition-colors" : "opacity-60"
-              }
-            >
+            <Card className={isOpen ? "hover:border-primary/40 transition-colors" : "opacity-60"}>
               <CardHeader>
                 <div className="bg-accent text-accent-foreground inline-flex h-10 w-10 items-center justify-center rounded-lg">
                   <Icon className="h-5 w-5" />
@@ -82,14 +109,12 @@ export default async function HomePage() {
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-xs tracking-wide uppercase">
-                  {feature.available ? "Đã mở" : "Sắp ra mắt"}
-                </p>
+                <p className="text-muted-foreground text-xs tracking-wide uppercase">{badge}</p>
               </CardContent>
             </Card>
           );
 
-          return feature.available ? (
+          return isOpen ? (
             <Link key={feature.href} href={feature.href} className="block">
               {content}
             </Link>
