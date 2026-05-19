@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
-import { CheckCircle2, Circle, Trash2, Pencil } from "lucide-react";
+import { useState, useTransition } from "react";
+import { CheckCircle2, Circle, Trash2, Pencil, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
 import { deleteWish, toggleWishFulfilled } from "@/lib/wishes/actions";
 import { formatRelative } from "@/lib/utils/format";
+import { WishShareDialog } from "@/components/wishes/wish-share-dialog";
 
 export interface WishCardData {
   id: string;
@@ -23,11 +24,14 @@ export interface WishCardData {
 
 interface WishCardProps {
   wish: WishCardData;
+  /** display_name for share watermark; falls back to "Mình". */
+  displayName?: string;
 }
 
-export function WishCard({ wish }: WishCardProps) {
+export function WishCard({ wish, displayName }: WishCardProps) {
   const [pendingToggle, startToggle] = useTransition();
   const [pendingDelete, startDelete] = useTransition();
+  const [shareOpen, setShareOpen] = useState(false);
 
   return (
     <Card className={cn(wish.is_fulfilled && "opacity-60")}>
@@ -58,6 +62,15 @@ export function WishCard({ wish }: WishCardProps) {
               {wish.title}
             </h3>
             <div className="flex shrink-0 gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Chia sẻ"
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
               <Button asChild variant="ghost" size="icon" aria-label="Sửa">
                 <Link href={`/wishes/${wish.id}/edit`}>
                   <Pencil className="h-4 w-4" />
@@ -100,6 +113,16 @@ export function WishCard({ wish }: WishCardProps) {
           </p>
         </div>
       </CardContent>
+      <WishShareDialog
+        wish={{
+          title: wish.title,
+          description: wish.description,
+          emoji: wish.emoji,
+          displayName: displayName ?? "Mình",
+        }}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </Card>
   );
 }
