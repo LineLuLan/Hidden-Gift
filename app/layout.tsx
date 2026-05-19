@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+
+import { Toaster } from "@/components/ui/sonner";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -41,8 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="bg-background text-foreground min-h-full flex flex-col">
+      <body className="bg-background text-foreground flex min-h-full flex-col">
         {children}
+        <Toaster />
       </body>
     </html>
   );
