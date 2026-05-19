@@ -1,0 +1,152 @@
+/**
+ * @file lib/env.ts
+ * @description Zod-validated environment variables. Required keys throw at boot;
+ *              optional keys log a warning and disable the matching feature flag.
+ * @phase 0/1
+ */
+
+import { z } from "zod";
+
+// ─── Schemas ───────────────────────────────────────────────────────────────
+
+const serverSchema = z.object({
+  // App
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  // Supabase (REQUIRED)
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, "Supabase service_role key missing"),
+  SUPABASE_PROJECT_REF: z.string().min(10, "Supabase project ref missing"),
+  SUPABASE_DB_PASSWORD: z.string().min(8, "Supabase DB password missing"),
+
+  // Better-Auth (REQUIRED)
+  BETTER_AUTH_SECRET: z.string().min(32, "Better-Auth secret must be 32+ chars"),
+  BETTER_AUTH_URL: z.string().url("Better-Auth URL must be a valid URL"),
+
+  // Google OAuth (optional — login Google disabled if missing)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  // Cloudflare R2 (optional — memory upload uses local fallback if missing)
+  CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET_NAME: z.string().default("hidden-gift-memories"),
+  R2_PUBLIC_URL: z.string().url().optional(),
+
+  // Trigger.dev (optional — scheduled jobs disabled if missing)
+  TRIGGER_SECRET_KEY: z.string().optional(),
+  TRIGGER_PROJECT_ID: z.string().optional(),
+
+  // Resend (optional — emails logged to console if missing)
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().email().default("onboarding@resend.dev"),
+
+  // Upstash Redis (optional — rate limit falls back to in-memory)
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  // Sentry (optional — errors logged to console only)
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().default("hidden-gift"),
+
+  // PayOS (Phase 3 only)
+  PAYOS_CLIENT_ID: z.string().optional(),
+  PAYOS_API_KEY: z.string().optional(),
+  PAYOS_CHECKSUM_KEY: z.string().optional(),
+});
+
+const clientSchema = z.object({
+  // Supabase (REQUIRED — anon key safe in browser)
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url("Supabase URL must be a valid URL"),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20, "Supabase anon key missing"),
+
+  // App
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+
+  // PostHog (optional)
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
+
+  // Plausible (optional)
+  NEXT_PUBLIC_PLAUSIBLE_DOMAIN: z.string().optional(),
+});
+
+// ─── Parse ─────────────────────────────────────────────────────────────────
+
+function formatErrors(error: z.ZodError) {
+  return error.errors.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
+}
+
+const parsedServer = serverSchema.safeParse(process.env);
+if (!parsedServer.success) {
+  console.error(
+    "\n❌ Invalid server environment variables:\n" +
+      formatErrors(parsedServer.error) +
+      "\n\nCheck .env.local against .env.example. See docs/API-KEYS-GUIDE.md.\n",
+  );
+  throw new Error("Missing required environment variables");
+}
+
+const parsedClient = clientSchema.safeParse({
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+  NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  NEXT_PUBLIC_PLAUSIBLE_DOMAIN: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
+});
+if (!parsedClient.success) {
+  console.error(
+    "\n❌ Invalid public environment variables:\n" + formatErrors(parsedClient.error) + "\n",
+  );
+  throw new Error("Missing required NEXT_PUBLIC_* environment variables");
+}
+
+const serverEnv = parsedServer.data;
+const clientEnv = parsedClient.data;
+
+// ─── Feature flags (derived) ───────────────────────────────────────────────
+
+export const features = {
+  googleAuth: Boolean(serverEnv.GOOGLE_CLIENT_ID && serverEnv.GOOGLE_CLIENT_SECRET),
+  r2: Boolean(
+    serverEnv.CLOUDFLARE_ACCOUNT_ID &&
+    serverEnv.R2_ACCESS_KEY_ID &&
+    serverEnv.R2_SECRET_ACCESS_KEY &&
+    serverEnv.R2_PUBLIC_URL,
+  ),
+  trigger: Boolean(serverEnv.TRIGGER_SECRET_KEY && serverEnv.TRIGGER_PROJECT_ID),
+  resend: Boolean(serverEnv.RESEND_API_KEY),
+  upstash: Boolean(serverEnv.UPSTASH_REDIS_REST_URL && serverEnv.UPSTASH_REDIS_REST_TOKEN),
+  posthog: Boolean(clientEnv.NEXT_PUBLIC_POSTHOG_KEY),
+  sentry: Boolean(serverEnv.SENTRY_DSN),
+  plausible: Boolean(clientEnv.NEXT_PUBLIC_PLAUSIBLE_DOMAIN),
+  payos: Boolean(
+    serverEnv.PAYOS_CLIENT_ID && serverEnv.PAYOS_API_KEY && serverEnv.PAYOS_CHECKSUM_KEY,
+  ),
+} as const;
+
+// ─── Warnings (dev only) ───────────────────────────────────────────────────
+
+if (typeof window === "undefined" && serverEnv.NODE_ENV !== "production") {
+  const disabled = Object.entries(features)
+    .filter(([, enabled]) => !enabled)
+    .map(([name]) => name);
+  if (disabled.length > 0) {
+    console.warn(
+      `[env] Optional services disabled (missing keys): ${disabled.join(", ")}. ` +
+        `See docs/API-KEYS-GUIDE.md to enable.`,
+    );
+  }
+}
+
+// ─── Exports ───────────────────────────────────────────────────────────────
+
+export const env = {
+  ...serverEnv,
+  ...clientEnv,
+} as const;
+
+export type Env = typeof env;
