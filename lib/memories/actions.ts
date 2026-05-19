@@ -12,7 +12,9 @@ import { randomUUID } from "node:crypto";
 
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
+import { features } from "@/lib/env";
 import { memoryIdSchema, memoryMetadataSchema } from "@/lib/memories/schema";
+import { r2DeleteObject, r2PutObject } from "@/lib/storage/r2";
 
 const BUCKET = "memories";
 const MAX_BYTES = 10 * 1024 * 1024; // mirror bucket policy
@@ -67,26 +69,44 @@ export async function uploadMemory(
   const account = await requireAccount();
   const supabase = await createClient();
 
-  // Path: <account_id>/<random>.<ext> — RLS reads first folder as account_id
+  // Path: <account_id>/<random>.<ext> — Supabase RLS reads first folder as account_id
   const ext = file.name.split(".").pop()?.toLowerCase() ?? mime.split("/")[1] ?? "bin";
-  const path = `${account.accountId}/${randomUUID()}.${ext}`;
-
+  const key = `${account.accountId}/${randomUUID()}.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
-  const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, arrayBuffer, {
-    contentType: mime,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (upErr) {
-    return { ok: false, error: `Không upload được: ${upErr.message}` };
-  }
 
-  // Signed URL (private bucket) — long expiry; UI re-requests as needed
-  const { data: signed, error: signErr } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
-  if (signErr || !signed) {
-    return { ok: false, error: "Không tạo được signed URL" };
+  // Storage routing: R2 if configured (full public URL persisted), else
+  // Supabase Storage (path persisted, signed at read time).
+  let mediaUrl: string;
+  let displayUrl: string;
+
+  if (features.r2) {
+    const r2Result = await r2PutObject({
+      key,
+      body: arrayBuffer,
+      contentType: mime,
+    });
+    if (!r2Result) {
+      return { ok: false, error: "R2 upload failed" };
+    }
+    mediaUrl = r2Result.url;
+    displayUrl = r2Result.url;
+  } else {
+    const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, arrayBuffer, {
+      contentType: mime,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (upErr) {
+      return { ok: false, error: `Không upload được: ${upErr.message}` };
+    }
+    const { data: signed, error: signErr } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(key, 60 * 60 * 24 * 7);
+    if (signErr || !signed) {
+      return { ok: false, error: "Không tạo được signed URL" };
+    }
+    mediaUrl = key;
+    displayUrl = signed.signedUrl;
   }
 
   const { data, error } = await supabase
@@ -96,7 +116,7 @@ export async function uploadMemory(
       uploaded_by: user.id,
       title: parsed.data.title ?? null,
       description: parsed.data.description ?? null,
-      media_url: path, // store path; we generate signed URL on read
+      media_url: mediaUrl,
       media_type: mediaType,
       media_size: file.size,
       taken_at: parsed.data.takenAt ?? null,
@@ -104,13 +124,14 @@ export async function uploadMemory(
     .select("id")
     .single();
   if (error) {
-    // Try to clean up the orphaned file
-    void supabase.storage.from(BUCKET).remove([path]);
+    // Clean up orphaned upload
+    if (features.r2) void r2DeleteObject(key);
+    else void supabase.storage.from(BUCKET).remove([key]);
     return { ok: false, error: `Không lưu được kỷ niệm: ${error.message}` };
   }
 
   revalidatePath("/memories");
-  return { ok: true, memoryId: data.id as string, mediaUrl: signed.signedUrl };
+  return { ok: true, memoryId: data.id as string, mediaUrl: displayUrl };
 }
 
 export async function deleteMemory(id: string): Promise<MemoryActionResult> {
@@ -130,8 +151,16 @@ export async function deleteMemory(id: string): Promise<MemoryActionResult> {
   if (error) return { ok: false, error: error.message };
 
   if (existing) {
-    const path = (existing as { media_url: string }).media_url;
-    void supabase.storage.from(BUCKET).remove([path]);
+    const url = (existing as { media_url: string }).media_url;
+    // Heuristic: R2 stores full https URL; Supabase Storage stores bare path
+    if (url.startsWith("http")) {
+      // Extract object key from R2 public URL prefix
+      const r2Prefix = process.env.R2_PUBLIC_URL ?? "";
+      const key = r2Prefix && url.startsWith(r2Prefix) ? url.slice(r2Prefix.length + 1) : null;
+      if (key) void r2DeleteObject(key);
+    } else {
+      void supabase.storage.from(BUCKET).remove([url]);
+    }
   }
 
   revalidatePath("/memories");
@@ -143,15 +172,27 @@ export async function deleteMemory(id: string): Promise<MemoryActionResult> {
  * before rendering the gallery. Paths invalid for the caller (RLS-blocked)
  * yield empty strings and consumers skip them.
  */
-export async function signMemoryUrls(paths: string[]): Promise<Record<string, string>> {
-  if (paths.length === 0) return {};
+export async function signMemoryUrls(urls: string[]): Promise<Record<string, string>> {
+  if (urls.length === 0) return {};
   await requireUser();
+
+  // R2 entries already public — just echo the URL back.
+  const out: Record<string, string> = {};
+  const supabasePaths: string[] = [];
+  for (const url of urls) {
+    if (url.startsWith("http")) {
+      out[url] = url;
+    } else {
+      supabasePaths.push(url);
+    }
+  }
+  if (supabasePaths.length === 0) return out;
+
   const supabase = await createClient();
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrls(paths, 60 * 60 * 24 * 7);
-  if (error || !data) return {};
-  const out: Record<string, string> = {};
+    .createSignedUrls(supabasePaths, 60 * 60 * 24 * 7);
+  if (error || !data) return out;
   for (const item of data) {
     if (item.path && item.signedUrl) out[item.path] = item.signedUrl;
   }

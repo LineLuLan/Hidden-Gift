@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 
+import { Suspense } from "react";
+
 import { Toaster } from "@/components/ui/sonner";
+import { PostHogProvider } from "@/components/analytics/posthog-provider";
 
 import "./globals.css";
 
@@ -61,7 +64,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
       <body className="bg-background text-foreground flex min-h-full flex-col">
-        {children}
+        <Suspense fallback={null}>
+          <PostHogProvider>{children}</PostHogProvider>
+        </Suspense>
         <Toaster />
       </body>
     </html>

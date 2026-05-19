@@ -34,8 +34,21 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-border/60 border-t py-6">
-        <div className="text-muted-foreground mx-auto max-w-5xl px-4 text-xs">
-          © {new Date().getFullYear()} Hidden Gift · 100B Studio · Made with 💝 in Hà Nội
+        <div className="text-muted-foreground mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 text-xs">
+          <span>
+            © {new Date().getFullYear()} Hidden Gift · 100B Studio · Made with 💝 in Hà Nội
+          </span>
+          <nav className="flex gap-4">
+            <Link href="/privacy" className="hover:text-foreground">
+              Bảo mật
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
+              Điều khoản
+            </Link>
+            <Link href="/about" className="hover:text-foreground">
+              Giới thiệu
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
