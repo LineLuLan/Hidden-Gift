@@ -103,9 +103,15 @@ export function GiftIdeasBrowser({ items }: GiftIdeasBrowserProps) {
         </Card>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((g) => (
-            <li key={g.id}>
-              <Card className="hover:border-primary/40 h-full transition-colors">
+          {items.map((g) => {
+            const hasLink = Boolean(g.affiliate_url);
+            const body = (
+              <Card
+                className={cn(
+                  "h-full transition-colors",
+                  hasLink && "hover:border-primary/60 cursor-pointer",
+                )}
+              >
                 <CardContent className="space-y-2.5 p-4">
                   <div className="flex items-start gap-2">
                     <span className="text-2xl">{g.emoji ?? "🎁"}</span>
@@ -132,11 +138,32 @@ export function GiftIdeasBrowser({ items }: GiftIdeasBrowserProps) {
                         {labelOfOccasion(o)}
                       </span>
                     ))}
+                    {hasLink ? (
+                      <span className="text-primary text-xs font-medium">
+                        Mua trên {g.affiliate_partner ?? "shop"} →
+                      </span>
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>
-            </li>
-          ))}
+            );
+            return (
+              <li key={g.id}>
+                {hasLink ? (
+                  <a
+                    href={`/gift-ideas/go/${g.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored"
+                    className="block"
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  body
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -13,7 +13,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/lib/auth/server";
+import { WrappedShare } from "@/components/wrapped/wrapped-share";
+import { requireAccount, requireUser } from "@/lib/auth/server";
 import { computeWrappedStats } from "@/lib/wrapped/queries";
 
 export const metadata: Metadata = { title: "Wrapped" };
@@ -39,11 +40,13 @@ interface WrappedPageProps {
 
 export default async function WrappedPage({ searchParams }: WrappedPageProps) {
   const user = await requireUser();
+  const account = await requireAccount();
   const sp = await searchParams;
   const requestedYear = sp.year ? parseInt(sp.year, 10) : new Date().getFullYear();
   const year = Number.isInteger(requestedYear) ? requestedYear : new Date().getFullYear();
 
   const stats = await computeWrappedStats(user.id, year);
+  const displayName = account.displayName ?? user.email?.split("@")[0] ?? "Bạn";
 
   const totalEvents =
     stats.wishesCount +
@@ -129,10 +132,11 @@ export default async function WrappedPage({ searchParams }: WrappedPageProps) {
             Năm tới sẽ là một năm nhiều khoảnh khắc đẹp hơn.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            <Button asChild>
+            <WrappedShare stats={stats} displayName={displayName} />
+            <Button asChild variant="outline">
               <Link href="/wishes/new">Tạo điều ước mới</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="ghost">
               <Link href={`/wrapped?year=${year - 1}`}>
                 <Calendar className="h-4 w-4" />
                 Xem năm {year - 1}

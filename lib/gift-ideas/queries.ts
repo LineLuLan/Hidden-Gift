@@ -19,6 +19,9 @@ export interface GiftIdea {
   emoji: string | null;
   image_url: string | null;
   popularity: number;
+  affiliate_url: string | null;
+  affiliate_partner: string | null;
+  click_count: number;
   created_at: string;
 }
 
