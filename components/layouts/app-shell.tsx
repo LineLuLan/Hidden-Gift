@@ -6,6 +6,7 @@ import { Heart, Gift, Mail, Image, Bell, Home, LogOut, Settings, Sparkles } from
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface NavItem {
   href: string;
@@ -70,7 +71,10 @@ export function AppShell({ displayName, children, notificationSlot }: AppShellPr
               <p className="text-muted-foreground text-xs">Xin chào</p>
               <p className="text-sm font-medium">{displayName}</p>
             </div>
-            {notificationSlot}
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              {notificationSlot}
+            </div>
           </div>
           <Button asChild variant="ghost" size="sm" className="w-full justify-start">
             <Link href="/settings">
@@ -95,6 +99,7 @@ export function AppShell({ displayName, children, notificationSlot }: AppShellPr
             Hidden Gift
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {notificationSlot}
             <form action="/auth/signout" method="post">
               <Button type="submit" variant="ghost" size="icon" aria-label="Đăng xuất">

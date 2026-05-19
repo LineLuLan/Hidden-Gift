@@ -37,6 +37,19 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
+// Inline pre-hydration script reads localStorage and applies .dark class
+// before React mounts, eliminating flash of incorrect theme.
+const THEME_BOOT = `
+(function() {
+  try {
+    var t = localStorage.getItem('hidden-gift-theme') || 'system';
+    var isDark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) document.documentElement.classList.add('dark');
+    document.documentElement.dataset.theme = t;
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,6 +57,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body className="bg-background text-foreground flex min-h-full flex-col">
         {children}
         <Toaster />
