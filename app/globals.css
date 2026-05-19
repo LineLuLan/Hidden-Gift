@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/*
+ * Dark mode strategy: class-based via `.dark` on <html>, plus a media-query
+ * fallback for users who haven't picked a mode (i.e. ThemeToggle is in
+ * "system" — no class on <html>).
+ *
+ * ThemeToggle component sets `data-theme="dark|light|system"` on <html> AND
+ * applies `.dark` when resolved theme is dark. SSR boot script in
+ * app/layout.tsx hydrates the class before React mounts (no FOUC).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Surfaces */
   --color-background: oklch(99% 0 0);
@@ -34,30 +45,29 @@
   --radius-xl: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: oklch(10% 0 0);
-    --color-foreground: oklch(96% 0 0);
-    --color-card: oklch(14% 0 0);
-    --color-card-foreground: oklch(96% 0 0);
-    --color-popover: oklch(14% 0 0);
-    --color-popover-foreground: oklch(96% 0 0);
+/* Dark overrides — applied when html.dark OR (no class set AND OS dark) */
+.dark {
+  --color-background: oklch(10% 0 0);
+  --color-foreground: oklch(96% 0 0);
+  --color-card: oklch(14% 0 0);
+  --color-card-foreground: oklch(96% 0 0);
+  --color-popover: oklch(14% 0 0);
+  --color-popover-foreground: oklch(96% 0 0);
 
-    --color-primary: oklch(70% 0.18 350);
-    --color-primary-foreground: oklch(15% 0 0);
-    --color-secondary: oklch(22% 0.02 350);
-    --color-secondary-foreground: oklch(96% 0 0);
-    --color-accent: oklch(25% 0.04 350);
-    --color-accent-foreground: oklch(96% 0 0);
-    --color-destructive: oklch(55% 0.22 27);
-    --color-destructive-foreground: oklch(99% 0 0);
+  --color-primary: oklch(70% 0.18 350);
+  --color-primary-foreground: oklch(15% 0 0);
+  --color-secondary: oklch(22% 0.02 350);
+  --color-secondary-foreground: oklch(96% 0 0);
+  --color-accent: oklch(25% 0.04 350);
+  --color-accent-foreground: oklch(96% 0 0);
+  --color-destructive: oklch(55% 0.22 27);
+  --color-destructive-foreground: oklch(99% 0 0);
 
-    --color-muted: oklch(18% 0 0);
-    --color-muted-foreground: oklch(65% 0 0);
-    --color-border: oklch(22% 0 0);
-    --color-input: oklch(22% 0 0);
-    --color-ring: oklch(70% 0.18 350);
-  }
+  --color-muted: oklch(18% 0 0);
+  --color-muted-foreground: oklch(65% 0 0);
+  --color-border: oklch(22% 0 0);
+  --color-input: oklch(22% 0 0);
+  --color-ring: oklch(70% 0.18 350);
 }
 
 body {
