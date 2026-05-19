@@ -7,6 +7,12 @@
 
 import { z } from "zod";
 
+// Empty strings in .env.local are treated as "not set" — Zod's .optional()
+// alone would still see "" as a value and fail .url()/.email() validation.
+const emptyToUndefined = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
+const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional());
+const optionalString = z.preprocess(emptyToUndefined, z.string().optional());
+
 // ─── Schemas ───────────────────────────────────────────────────────────────
 
 const serverSchema = z.object({
@@ -23,38 +29,38 @@ const serverSchema = z.object({
   BETTER_AUTH_URL: z.string().url("Better-Auth URL must be a valid URL"),
 
   // Google OAuth (optional — login Google disabled if missing)
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
 
   // Cloudflare R2 (optional — memory upload uses local fallback if missing)
-  CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
-  R2_ACCESS_KEY_ID: z.string().optional(),
-  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  CLOUDFLARE_ACCOUNT_ID: optionalString,
+  R2_ACCESS_KEY_ID: optionalString,
+  R2_SECRET_ACCESS_KEY: optionalString,
   R2_BUCKET_NAME: z.string().default("hidden-gift-memories"),
-  R2_PUBLIC_URL: z.string().url().optional(),
+  R2_PUBLIC_URL: optionalUrl,
 
   // Trigger.dev (optional — scheduled jobs disabled if missing)
-  TRIGGER_SECRET_KEY: z.string().optional(),
-  TRIGGER_PROJECT_ID: z.string().optional(),
+  TRIGGER_SECRET_KEY: optionalString,
+  TRIGGER_PROJECT_ID: optionalString,
 
   // Resend (optional — emails logged to console if missing)
-  RESEND_API_KEY: z.string().optional(),
+  RESEND_API_KEY: optionalString,
   RESEND_FROM_EMAIL: z.string().email().default("onboarding@resend.dev"),
 
   // Upstash Redis (optional — rate limit falls back to in-memory)
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: optionalUrl,
+  UPSTASH_REDIS_REST_TOKEN: optionalString,
 
   // Sentry (optional — errors logged to console only)
-  SENTRY_DSN: z.string().optional(),
-  SENTRY_AUTH_TOKEN: z.string().optional(),
-  SENTRY_ORG: z.string().optional(),
+  SENTRY_DSN: optionalString,
+  SENTRY_AUTH_TOKEN: optionalString,
+  SENTRY_ORG: optionalString,
   SENTRY_PROJECT: z.string().default("hidden-gift"),
 
   // PayOS (Phase 3 only)
-  PAYOS_CLIENT_ID: z.string().optional(),
-  PAYOS_API_KEY: z.string().optional(),
-  PAYOS_CHECKSUM_KEY: z.string().optional(),
+  PAYOS_CLIENT_ID: optionalString,
+  PAYOS_API_KEY: optionalString,
+  PAYOS_CHECKSUM_KEY: optionalString,
 });
 
 const clientSchema = z.object({
@@ -66,11 +72,11 @@ const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 
   // PostHog (optional)
-  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_KEY: optionalString,
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
 
   // Plausible (optional)
-  NEXT_PUBLIC_PLAUSIBLE_DOMAIN: z.string().optional(),
+  NEXT_PUBLIC_PLAUSIBLE_DOMAIN: optionalString,
 });
 
 // ─── Parse ─────────────────────────────────────────────────────────────────
