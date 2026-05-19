@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Gift, Mail, Image, Bell, Home, LogOut } from "lucide-react";
+import { Heart, Gift, Mail, Image, Bell, Home, LogOut, Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,12 @@ export function AppShell({ displayName, children }: AppShellProps) {
         <div className="border-border space-y-2 border-t p-4">
           <p className="text-muted-foreground px-3 text-xs">Xin chào</p>
           <p className="px-3 text-sm font-medium">{displayName}</p>
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <Link href="/settings">
+              <Settings className="h-4 w-4" />
+              Cài đặt
+            </Link>
+          </Button>
           <form action="/auth/signout" method="post">
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
               <LogOut className="h-4 w-4" />

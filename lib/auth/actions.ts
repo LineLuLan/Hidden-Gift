@@ -83,22 +83,24 @@ export async function signInWithEmail(
     return { ok: false, error: mapAuthError(error.message) };
   }
 
+  const next = safeNextPath(formData.get("next"));
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(next);
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(nextPath?: string): Promise<void> {
   if (!features.googleAuth) {
     throw new Error("Google OAuth chưa được cấu hình");
   }
 
   const supabase = await createClient();
   const origin = (await headers()).get("origin") ?? env.NEXT_PUBLIC_APP_URL;
+  const next = safeNextPath(nextPath ?? "/");
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=/`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
       queryParams: {
         access_type: "offline",
         prompt: "consent",
@@ -122,6 +124,14 @@ export async function signOut(): Promise<void> {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+/** Only allow relative paths to prevent open-redirect via crafted `next` URLs. */
+function safeNextPath(raw: FormDataEntryValue | string | null | undefined): string {
+  const value = typeof raw === "string" ? raw : "";
+  if (!value.startsWith("/")) return "/";
+  if (value.startsWith("//")) return "/";
+  return value;
+}
 
 /** Translate Supabase Auth error codes to Vietnamese user-facing strings. */
 function mapAuthError(message: string): string {

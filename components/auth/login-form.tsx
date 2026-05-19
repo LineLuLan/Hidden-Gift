@@ -20,9 +20,10 @@ import { GoogleButton } from "@/components/auth/google-button";
 
 interface LoginFormProps {
   googleEnabled: boolean;
+  next?: string;
 }
 
-export function LoginForm({ googleEnabled }: LoginFormProps) {
+export function LoginForm({ googleEnabled, next }: LoginFormProps) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(
     signInWithEmail,
     null,
@@ -36,6 +37,7 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">
+          {next ? <input type="hidden" name="next" value={next} /> : null}
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -88,7 +90,7 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
                 <span className="bg-card text-muted-foreground px-2">Hoặc</span>
               </div>
             </div>
-            <GoogleButton />
+            <GoogleButton next={next} />
           </>
         ) : null}
       </CardContent>
