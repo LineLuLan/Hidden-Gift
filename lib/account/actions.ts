@@ -123,6 +123,33 @@ export async function updateProfile(
   return { ok: true };
 }
 
+/** Owner switches account kind (couple ↔ squad ↔ family). Capacity enforced server-side. */
+export async function setAccountKind(
+  kind: "couple" | "squad" | "family",
+): Promise<AccountActionResult> {
+  const account = await requireAccount();
+  if (account.role !== "owner") {
+    return { ok: false, error: "Chỉ chủ tài khoản đổi mode" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_account_kind", {
+    p_account_id: account.accountId,
+    p_new_kind: kind,
+  });
+  if (error) {
+    if (error.message.includes("TOO_MANY_MEMBERS")) {
+      return { ok: false, error: "Mode mới không đủ chỗ cho thành viên hiện tại" };
+    }
+    if (error.message.includes("INVALID_KIND")) {
+      return { ok: false, error: "Mode không hợp lệ" };
+    }
+    return { ok: false, error: error.message };
+  }
+  revalidatePath("/", "layout");
+  revalidatePath("/settings");
+  return { ok: true };
+}
+
 function mapInviteError(raw: string): string {
   if (raw.includes("NOT_AUTHENTICATED")) return "Bạn cần đăng nhập trước";
   if (raw.includes("INVITE_NOT_FOUND")) return "Mã mời không tồn tại hoặc đã hết hạn";
