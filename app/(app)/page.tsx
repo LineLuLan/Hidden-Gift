@@ -47,9 +47,9 @@ const FEATURES: Feature[] = [
   {
     href: "/memories",
     title: "Kỷ niệm",
-    description: "Album ảnh + video chung. Cùng nhau lưu giữ khoảnh khắc.",
+    description: "Album ảnh + video chung. iPhone HEIC tự convert, resize 2048px.",
     icon: Image,
-    status: "soon",
+    status: "always",
   },
 ];
 
