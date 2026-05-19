@@ -4,7 +4,6 @@ import { useTransition } from "react";
 import { Heart, Users, UsersRound, Home } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
 import { setAccountKind } from "@/lib/account/actions";

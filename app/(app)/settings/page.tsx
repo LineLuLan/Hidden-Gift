@@ -7,6 +7,8 @@ import { ProfileForm } from "@/components/account/profile-form";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { DataControls } from "@/components/profile/data-controls";
 import { ModeSwitcher } from "@/components/profile/mode-switcher";
+import { EmailPrefsCard } from "@/components/profile/email-prefs";
+import { DEFAULT_PREFS, type EmailPrefs } from "@/lib/preferences/schema";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -41,6 +43,18 @@ export default async function SettingsPage() {
     (acctMeta as { deletion_requested_at?: string | null } | null)?.deletion_requested_at ?? null;
 
   const initials = (userMember?.display_name ?? user.email ?? "B").slice(0, 2).toUpperCase();
+
+  // Fetch caller's email preferences from member row
+  const { data: prefsRow } = await supabase
+    .from("account_members")
+    .select("email_prefs")
+    .eq("user_id", user.id)
+    .eq("account_id", account.accountId)
+    .maybeSingle();
+  const emailPrefs: EmailPrefs = {
+    ...DEFAULT_PREFS,
+    ...((prefsRow as { email_prefs?: Partial<EmailPrefs> } | null)?.email_prefs ?? {}),
+  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -120,6 +134,8 @@ export default async function SettingsPage() {
         isOwner={userMember?.role === "owner"}
         alreadyLinked={linked}
       />
+
+      <EmailPrefsCard current={emailPrefs} />
 
       <DataControls deletionRequestedAt={deletionRequestedAt} />
     </div>
