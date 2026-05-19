@@ -20,10 +20,6 @@ export interface LetterActionResult {
   letterId?: string;
 }
 
-function bodyJson(text: string) {
-  return { type: "text", content: text };
-}
-
 export async function saveLetter(
   letterId: string | null,
   _prev: LetterActionResult | null,
@@ -55,7 +51,7 @@ export async function saveLetter(
       .from("letters")
       .update({
         subject: parsed.data.subject,
-        body: bodyJson(parsed.data.body),
+        body: parsed.data.body as object,
         scheduled_for: parsed.data.scheduledFor,
         is_draft: parsed.data.isDraft,
       })
@@ -73,7 +69,7 @@ export async function saveLetter(
       sender_id: user.id,
       recipient_id: parsed.data.recipientId,
       subject: parsed.data.subject,
-      body: bodyJson(parsed.data.body),
+      body: parsed.data.body as object,
       scheduled_for: parsed.data.scheduledFor,
       is_draft: parsed.data.isDraft,
     })

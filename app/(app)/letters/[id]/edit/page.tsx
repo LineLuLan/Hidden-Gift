@@ -6,7 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { LetterForm } from "@/components/letters/letter-form";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
-import { getLetter, getLetterText } from "@/lib/letters/queries";
+import { getLetter } from "@/lib/letters/queries";
 
 export const metadata: Metadata = { title: "Sửa thư" };
 
@@ -49,7 +49,7 @@ export default async function EditLetterPage({ params }: EditLetterPageProps) {
         defaultValues={{
           id: letter.id,
           subject: letter.subject,
-          bodyText: getLetterText(letter),
+          body: letter.body,
           scheduledFor: letter.scheduled_for,
           isDraft: letter.is_draft,
         }}

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /*
  * Dark mode strategy: class-based via `.dark` on <html>, plus a media-query
