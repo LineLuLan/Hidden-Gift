@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Heart, Gift, Mail, Image as ImageIcon, Bell, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Hidden Gift — Bí mật yêu thương cho hai người",
