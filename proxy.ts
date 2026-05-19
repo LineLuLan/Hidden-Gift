@@ -1,9 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 
-// TODO Phase 0: wire Better-Auth session check + tenant context.
-// For now passthrough so dev server runs without auth blocking.
-export function proxy(_request: NextRequest) {
-  return NextResponse.next();
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function proxy(request: NextRequest) {
+  return updateSession(request);
 }
 
 export const config = {
