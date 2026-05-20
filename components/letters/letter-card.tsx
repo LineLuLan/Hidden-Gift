@@ -24,10 +24,12 @@ interface LetterCardProps {
   letter: LetterCardData;
   /** true if current user is the sender. */
   isOwner: boolean;
-  partnerName: string;
+  /** Name of the OTHER party (recipient if owner; sender if recipient). */
+  otherPartyName: string;
 }
 
-export function LetterCard({ letter, isOwner, partnerName }: LetterCardProps) {
+export function LetterCard({ letter, isOwner, otherPartyName }: LetterCardProps) {
+  const partnerName = otherPartyName;
   const [pending, startTransition] = useTransition();
   const delivered = letter.delivered_at !== null;
   const scheduled = !delivered && !letter.is_draft;

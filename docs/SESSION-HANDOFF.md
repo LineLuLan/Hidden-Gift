@@ -31,12 +31,20 @@ Code from Phase 0 (scaffold) through Phase 4 (scale prep + compliance) is **comp
 
 ### Phase 1 — Couple Core (6 features)
 
-- **Wishes** CRUD + free-tier 5-cap + user-private RLS
+- **Wishes** CRUD + free-tier 5-cap. ADR-003 (2026-05-20): RLS opens to all account members (shared wishlist); only owner can edit/delete
 - **Partner Invite** atomic Postgres RPC, wish migration on accept, one-time code
-- **Secrets** asymmetric (recipient blocked until `status='delivered'`)
+- **Secrets** ADR-003: now also acts as silent-claim records (`linked_wish_id`); 3-way asymmetric RLS (preparer / non-recipient member / recipient-delivered)
 - **Letters** Tiptap rich text + scheduled + manual deliver fallback
 - **Emoji Pings** Supabase Realtime + global listener mounted on app shell
 - **Memories** HEIC convert + 2048px resize client-side, Supabase Storage / R2 swap-ready
+
+### Phase 1.5 — Wishlist redesign (2026-05-20, ADR-003)
+
+- **Migration 018** `20260520000001_wishlist_redesign.sql` — drops old wishes/secrets RLS, installs shared-wishlist + 3-way asymmetric secret model
+- **New server actions** `claimWish`, `unclaimWish`, `markGifted` in `lib/wishes/actions.ts`
+- **UI variants**: owner card (edit/delete/share) vs non-owner card (claim button + "X đã chọn món này" badge for squad coordination, no leak to wisher)
+- **Side-effect**: `markGifted`/`markDelivered` on a linked secret atomically flips the wish to `is_fulfilled` (optimistic predicate avoids race between squad members)
+- **Free-form secrets** still supported (linked_wish_id null) — surprise gifts outside the wishlist
 
 ### Phase 2 — Viral hooks (5 features)
 
@@ -187,6 +195,7 @@ Each integration uses the **graceful skip pattern**: `features.<service>` boolea
 015 squad_family_capacity      — account_member_capacity() + set_account_kind() + multi-member accept_invite
 016 affiliate_links            — gift_ideas.affiliate_url/partner/click_count + increment RPC
 017 email_preferences          — account_members.email_prefs JSONB
+018 wishlist_redesign          — ADR-003: wishes shared to account; secrets 3-way asymmetric; idx_wishes_account_active
 ```
 
 ---

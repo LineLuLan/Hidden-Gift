@@ -1,30 +1,30 @@
 # Hidden Gift
 
-> Bí mật yêu thương cho hai người — app couple Gen Z Việt Nam với asymmetric privacy enforced ở tầng PostgreSQL Row-Level Security.
+> Wishlist + silent gift coordination cho couple / squad / family Gen Z Việt Nam — danh tính người tặng được PostgreSQL Row-Level Security ẩn cho đến lúc "đã tặng".
 
 **Studio**: 100B Studio (Hà Nội)
-**Status**: Phase 0–4 complete · 31 routes · 17 migrations · 50+ commits
+**Status**: Phase 0–4 complete + Phase 1.5 wishlist redesign · 32 routes · 18 migrations · 80+ commits
 
 ---
 
-## Tech moat
+## Tech moat (ADR-003)
 
-Khác với phần lớn app couple, Hidden Gift dùng Postgres RLS để enforce visibility asymmetry **ở tầng database**. Partner KHÔNG thấy điều ước, bí mật đang chuẩn bị, hay nhật ký crush — kể cả khi inspect mạng / chạy query trực tiếp với token của họ. Đã verified end-to-end qua Node admin client test.
+Wishlist owner thấy điều mình mong nhưng KHÔNG biết ai đang chuẩn bị / khi nào sẽ được tặng. Thành viên khác trong nhóm (non-recipient) THẤY active claims để tránh trùng quà. Recipient chỉ thấy "đã được tặng" sau khi claimer `markGifted` → wish lập tức `is_fulfilled` + show người tặng. Enforce ở Postgres RLS, không phải UI trick → differentiator thật vs Amazon Wishlist (lộ hết claim ngay khi reserve).
 
 ---
 
 ## Feature matrix
 
-### Phase 1 — Couple Core
+### Phase 1 — Couple Core (post ADR-003)
 
-| Feature            | Description                                                               |
-| ------------------ | ------------------------------------------------------------------------- |
-| **Wishes**         | Điều ước riêng tư. RLS `user_id = auth.uid()`. 5-cap free tier.           |
-| **Partner Invite** | Atomic Postgres RPC `accept_invite` — wishes follow user vào account mới. |
-| **Secrets**        | Asymmetric — recipient blocked đến `status='delivered'`.                  |
-| **Letters**        | Tiptap rich text + scheduled delivery. Trigger.dev cron fires email.      |
-| **Emoji Pings**    | Supabase Realtime — partner thấy toast khi bạn gửi.                       |
-| **Memories**       | Album chia sẻ. HEIC convert + 2048px resize client-side. R2 swap-ready.   |
+| Feature            | Description                                                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Wishes**         | Shared wishlist với account members; chỉ owner edit/delete. 5-cap free tier. Non-owner thấy nút "Tôi sẽ chuẩn bị" → silent claim. |
+| **Partner Invite** | Atomic Postgres RPC `accept_invite` — wishes follow user vào account mới.                                                         |
+| **Secrets**        | 3-way asymmetric: preparer always; non-recipient member sees active claims (squad coord); recipient sees only delivered.          |
+| **Letters**        | Tiptap rich text + scheduled delivery. Trigger.dev cron fires email.                                                              |
+| **Emoji Pings**    | Supabase Realtime — partner thấy toast khi bạn gửi.                                                                               |
+| **Memories**       | Album chia sẻ. HEIC convert + 2048px resize client-side. R2 swap-ready.                                                           |
 
 ### Phase 2 — Viral hooks
 
@@ -137,9 +137,9 @@ trigger/                          — 3 Trigger.dev cron jobs
 
 ## Project status
 
-- **Phase 0–4 code: complete**
-- **Migrations**: 17 applied to remote (`ylssxjbmiwxpcpbemftm`)
-- **Routes**: 31 (4 static, 26 dynamic + API + middleware)
+- **Phase 0–4 code: complete + Phase 1.5 wishlist redesign (ADR-003)**
+- **Migrations**: 17 applied to remote (`ylssxjbmiwxpcpbemftm`), migration 018 wishlist_redesign awaiting push
+- **Routes**: 32 (4 static, 27 dynamic + API + middleware)
 - **Build / typecheck / lint**: 0 errors
 - **Branches**: `be` / `fe` / `dev` synced; `main` untouched until release
 - **Live integrations**: Supabase + Google OAuth ✓
@@ -149,19 +149,19 @@ trigger/                          — 3 Trigger.dev cron jobs
 
 ## Docs
 
-| File                                                 | Purpose                                                     |
-| ---------------------------------------------------- | ----------------------------------------------------------- |
-| [`CLAUDE.md`](./CLAUDE.md)                           | Project blueprint, locked decisions                         |
-| [`docs/API-KEYS-GUIDE.md`](./docs/API-KEYS-GUIDE.md) | 9-service registration walkthrough                          |
-| [`docs/SETUP.md`](./docs/SETUP.md)                   | Tier-grouped service signup                                 |
-| [`docs/DEPLOY.md`](./docs/DEPLOY.md)                 | Production deployment 7-step guide                          |
-| [`docs/PHASE-1-STATUS.md`](./docs/PHASE-1-STATUS.md) | Latest status snapshot + verification flow                  |
-| [`docs/DECISIONS.md`](./docs/DECISIONS.md)           | ADR log (ADR-001 branch model, ADR-002 Supabase Auth pivot) |
-| [`docs/GIT-WORKFLOW.md`](./docs/GIT-WORKFLOW.md)     | Branch rules + commit convention                            |
-| [`docs/CHECKLIST.md`](./docs/CHECKLIST.md)           | Live progress tracker                                       |
-| [`docs/ROADMAP.md`](./docs/ROADMAP.md)               | Phase 0–4 definition of done                                |
-| [`docs/EVALUATION.md`](./docs/EVALUATION.md)         | Spec gaps + resolutions                                     |
-| [`docs/HANDOFF.md`](./docs/HANDOFF.md)               | Daily/weekly sync template                                  |
+| File                                                 | Purpose                                                            |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| [`CLAUDE.md`](./CLAUDE.md)                           | Project blueprint, locked decisions                                |
+| [`docs/API-KEYS-GUIDE.md`](./docs/API-KEYS-GUIDE.md) | 9-service registration walkthrough                                 |
+| [`docs/SETUP.md`](./docs/SETUP.md)                   | Tier-grouped service signup                                        |
+| [`docs/DEPLOY.md`](./docs/DEPLOY.md)                 | Production deployment 7-step guide                                 |
+| [`docs/PHASE-1-STATUS.md`](./docs/PHASE-1-STATUS.md) | Latest status snapshot + verification flow                         |
+| [`docs/DECISIONS.md`](./docs/DECISIONS.md)           | ADR log (001 branch model, 002 Supabase Auth, 003 shared wishlist) |
+| [`docs/GIT-WORKFLOW.md`](./docs/GIT-WORKFLOW.md)     | Branch rules + commit convention                                   |
+| [`docs/CHECKLIST.md`](./docs/CHECKLIST.md)           | Live progress tracker                                              |
+| [`docs/ROADMAP.md`](./docs/ROADMAP.md)               | Phase 0–4 definition of done                                       |
+| [`docs/EVALUATION.md`](./docs/EVALUATION.md)         | Spec gaps + resolutions                                            |
+| [`docs/HANDOFF.md`](./docs/HANDOFF.md)               | Daily/weekly sync template                                         |
 
 ---
 

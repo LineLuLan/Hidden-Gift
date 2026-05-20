@@ -19,14 +19,15 @@ const COUPLE_FEATURES: Feature[] = [
   {
     href: "/wishes",
     title: "Điều ước",
-    description: "Ghi điều bạn mong nhận. Partner không thấy danh sách này — chỉ riêng bạn.",
+    description:
+      "Ghi điều bạn mong nhận. Cả nhóm thấy chung, nhưng ai âm thầm chuẩn bị quà thì bạn không biết.",
     icon: Heart,
     status: "always",
   },
   {
     href: "/secrets",
     title: "Chuẩn bị bí mật",
-    description: "Lên kế hoạch quà tặng cho partner. Bí mật cho tới ngày tặng.",
+    description: "Lên kế hoạch quà cho người ấy. Bí mật đến khi bạn đánh dấu Đã tặng.",
     icon: Gift,
     status: "couple",
   },
@@ -59,6 +60,16 @@ const COUPLE_FEATURES: Feature[] = [
     status: "always",
   },
 ];
+
+const FEATURE_TUTORIAL_KEY: Record<string, string> = {
+  "/wishes": "feature-wishes",
+  "/secrets": "feature-secrets",
+  "/letters": "feature-letters",
+  "/pings": "feature-pings",
+  "/memories": "feature-memories",
+  "/gift-ideas": "feature-gift-ideas",
+  "/crush": "feature-crush",
+};
 
 const SOLO_FEATURES: Feature[] = [
   {
@@ -105,7 +116,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <header className="space-y-1.5">
+      <header data-tutorial="hero" className="space-y-1.5">
         <p className="text-muted-foreground text-sm">Chào</p>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{greeting} ơi 💝</h1>
         <p className="text-muted-foreground max-w-xl">
@@ -116,7 +127,7 @@ export default async function HomePage() {
       </header>
 
       {!isSolo && !linked ? (
-        <Card>
+        <Card data-tutorial="invite-card">
           <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <div className="bg-accent text-primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
@@ -168,8 +179,12 @@ export default async function HomePage() {
           const isOpen = feature.status === "always" || (feature.status === "couple" && linked);
           const badge = feature.status === "soon" ? "Sắp ra mắt" : isOpen ? "Đã mở" : "Cần partner";
 
+          const tutorialKey = FEATURE_TUTORIAL_KEY[feature.href];
           const content = (
-            <Card className={isOpen ? "hover:border-primary/40 transition-colors" : "opacity-60"}>
+            <Card
+              data-tutorial={tutorialKey}
+              className={isOpen ? "hover:border-primary/40 transition-colors" : "opacity-60"}
+            >
               <CardHeader>
                 <div className="bg-accent text-accent-foreground inline-flex h-10 w-10 items-center justify-center rounded-lg">
                   <Icon className="h-5 w-5" />

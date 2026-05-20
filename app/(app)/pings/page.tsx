@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PingComposer } from "@/components/pings/ping-composer";
 import { PingList } from "@/components/pings/ping-list";
 import { requireAccount, requireUser } from "@/lib/auth/server";
-import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
+import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 import { listPings } from "@/lib/pings/queries";
 
 export const metadata: Metadata = { title: "Emoji Ping" };
@@ -23,7 +23,7 @@ export default async function PingsPage() {
         <header className="space-y-1.5">
           <h1 className="text-3xl font-semibold tracking-tight">Emoji Ping</h1>
           <p className="text-muted-foreground text-sm">
-            Gửi emoji cho partner trong nháy mắt — qua Supabase Realtime.
+            Gửi emoji cho thành viên trong nhóm — qua Supabase Realtime.
           </p>
         </header>
         <Card>
@@ -31,7 +31,7 @@ export default async function PingsPage() {
             <div className="bg-accent text-primary inline-flex h-12 w-12 items-center justify-center rounded-full">
               <Bell className="h-6 w-6" />
             </div>
-            <CardTitle className="mt-2">Cần partner trước</CardTitle>
+            <CardTitle className="mt-2">Cần ít nhất 2 người</CardTitle>
             <CardDescription>
               Ping cần người nhận. Mời partner ở Cài đặt để bật tính năng này.
             </CardDescription>
@@ -46,8 +46,9 @@ export default async function PingsPage() {
     );
   }
 
-  const partner = getPartner(detail, user.id);
-  const partnerName = partner?.display_name ?? "Partner";
+  const recipients = detail.members
+    .filter((m) => m.user_id !== user.id)
+    .map((m) => ({ id: m.user_id, name: m.display_name ?? "Thành viên" }));
   const pings = await listPings();
 
   return (
@@ -55,17 +56,17 @@ export default async function PingsPage() {
       <header className="space-y-1.5">
         <h1 className="text-3xl font-semibold tracking-tight">Emoji Ping</h1>
         <p className="text-muted-foreground text-sm">
-          Nháy nhanh cho {partnerName} — họ nhận realtime nếu đang online.
+          Nháy nhanh trong nhóm — người nhận thấy realtime nếu đang online.
         </p>
       </header>
 
-      <PingComposer partnerName={partnerName} />
+      <PingComposer recipients={recipients} />
 
       <section className="space-y-3">
         <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Hoạt động gần đây
         </h2>
-        <PingList pings={pings} currentUserId={user.id} partnerName={partnerName} />
+        <PingList pings={pings} currentUserId={user.id} members={detail.members} />
       </section>
     </div>
   );

@@ -1,6 +1,10 @@
 -- Hidden Gift — RLS policies (Phase 1)
 -- Pattern: wrap auth.uid() in SELECT for query-cache (CLAUDE.md §7 performance).
 -- All policies use (SELECT auth.uid()) instead of bare auth.uid().
+--
+-- NOTE 2026-05-20 (ADR-003): wishes_select_own + secrets_select are SUPERSEDED
+-- by migration 20260520000001_wishlist_redesign.sql. See docs/DECISIONS.md ADR-003
+-- for the shared-wishlist + silent-claim model. Do not restore the old policies.
 
 -- ─── Enable RLS ────────────────────────────────────────────────────────────
 

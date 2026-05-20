@@ -14,10 +14,12 @@ interface EditWishPageProps {
 }
 
 export default async function EditWishPage({ params }: EditWishPageProps) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const wish = await getWish(id);
   if (!wish) notFound();
+  // Post ADR-003: wishes are visible to all account members, but only owner can edit
+  if (wish.user_id !== user.id) notFound();
 
   return (
     <div className="mx-auto max-w-xl space-y-6">

@@ -1,6 +1,7 @@
 /**
  * @file lib/secrets/queries.ts
- * @description Read queries. RLS scopes: prepared_by sees always;
+ * @description Read queries. Post ADR-003 RLS is 3-way:
+ *              preparer always; other non-recipient members see active claims;
  *              recipient sees only when status='delivered'.
  */
 
@@ -26,7 +27,7 @@ export interface Secret {
   updated_at: string;
 }
 
-/** All secrets visible to the current user (own prepared + delivered to them). */
+/** All secrets visible to the current user (RLS-scoped). */
 export async function listSecrets(): Promise<Secret[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -37,6 +38,33 @@ export async function listSecrets(): Promise<Secret[]> {
 
   if (error) throw new Error(`Không tải được bí mật: ${error.message}`);
   return (data ?? []) as unknown as Secret[];
+}
+
+export interface GroupedSecrets {
+  preparing: Secret[]; // I am preparing
+  received: Secret[]; // I am recipient, delivered
+  squadActive: Secret[]; // others' active claims (squad coordination)
+}
+
+/** Group secrets by perspective relative to currentUserId. */
+export function groupSecrets(rows: Secret[], currentUserId: string): GroupedSecrets {
+  const preparing: Secret[] = [];
+  const received: Secret[] = [];
+  const squadActive: Secret[] = [];
+
+  for (const s of rows) {
+    if (s.prepared_by === currentUserId) {
+      preparing.push(s);
+    } else if (s.recipient_id === currentUserId) {
+      // Should only see delivered ones per RLS, but defend anyway
+      if (s.status === "delivered") received.push(s);
+    } else {
+      // I'm an account member but neither preparer nor recipient — squad coord view
+      squadActive.push(s);
+    }
+  }
+
+  return { preparing, received, squadActive };
 }
 
 export async function getSecret(id: string): Promise<Secret | null> {

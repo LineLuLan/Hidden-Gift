@@ -1,10 +1,13 @@
 # HIDDEN GIFT — PRODUCT & TECHNICAL BRIEF V2
+
 ## App Multi-tenant Freemium SaaS cho Thị trường Việt Nam
 
-**Version**: 2.0  
-**Date**: 18 tháng 5, 2026  
-**Team**: 3 người (1 BE Lead, 1 FE, 1 PM)  
+**Version**: 2.0 (with ADR-003 wishlist redesign overlay 2026-05-20)
+**Date**: 18 tháng 5, 2026
+**Team**: 3 người (1 BE Lead, 1 FE, 1 PM)
 **Status**: Research-backed, production-ready specification
+
+> ⚠️ **Pivot notice (2026-05-20)**: This brief specs `wishes` as **user-private** (RLS `user_id = auth.uid()`). After user feedback, the team pivoted to a **shared wishlist + silent-claim** model: wishes are visible to all account members; claims live in `secrets.linked_wish_id` with 3-way asymmetric RLS. See `docs/DECISIONS.md` **ADR-003** for the authoritative current model and `supabase/migrations/20260520000001_wishlist_redesign.sql` for the SQL. Sections 7.1–7.2 and Epic 1.1–1.2 below are kept as historical context but are superseded by ADR-003.
 
 ---
 
@@ -37,11 +40,13 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 **Pivot từ tone cũ**: Bỏ "tinh tế hơn ồn ào, không gamify" → Chuyển sang **viral, playful, shareable** nhưng vẫn giữ core "bí mật ngọt ngào".
 
 **Target demographic**:
+
 - **Primary**: Gen Z Việt Nam 18-25 tuổi, đang yêu hoặc có crush
 - **Secondary**: Millennials 26-32 tuổi (long-distance relationships)
 - **Geography**: Thành thị (HCMC, Hà Nội, Đà Nẵng, Cần Thơ) trước, tier 2-3 sau
 
 **Psychographics Gen Z VN 2026**:
+
 - **Digitally native**: 5-7 giờ/ngày trên social media, TikTok là favorite platform (42%)
 - **Authenticity-first**: Mệt mỏi với Instagram perfection, prefer "real moments" như BeReal, Locket Widget
 - **Private circles**: Thích chia sẻ trong nhóm nhỏ (10-20 người) thay vì broadcast công khai
@@ -50,6 +55,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Social currency**: Content phải shareable lên TikTok/IG để flex, nhưng không muốn overshare
 
 **Competitive landscape VN**:
+
 - **Between** ($2.99/mo): Established, nhưng không có viral hooks, không widget-first
 - **Paired** ($6-15/mo): Premium, therapy-focused, Western-centric
 - **Love Nudge**: Free, niche (5 love languages), thiếu memory features
@@ -61,6 +67,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 2.3 Value Propositions
 
 **P0 (Couple early-stage 18-24 tuổi)**:
+
 - Nơi ghi điều ước riêng mà người yêu chưa biết → mua quà đúng ý
 - Chuẩn bị quà bí mật mà người yêu không thể sneak peek (RLS enforce)
 - Gửi thư tình hẹn giờ (sinh nhật, kỷ niệm 100 ngày)
@@ -70,12 +77,14 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Solo Crush Diary: Viết nhật ký crush trước khi tỏ tình
 
 **P1 (Solo có crush 18-22 tuổi)**:
+
 - Ghi ước mơ về crush trong "Crush Vault" private
 - Prepare quà trong tưởng tượng trước khi tỏ tình
 - Đếm ngày biết crush, mốc quan trọng
 - Upgrade lên Couple Zone sau khi couple
 
 **P2 (Long-distance couple 22-28 tuổi)**:
+
 - Scheduled letters để "hẹn gặp nhau qua thư" giữa tuần
 - Countdown đến ngày gặp mặt
 - Shared timezone widget (future)
@@ -89,6 +98,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 **Minh, 19 tuổi, sinh viên năm 2 RMIT**
 
 **Demographics**:
+
 - Giới tính: Nam
 - Tuổi: 19
 - Nghề nghiệp: Sinh viên
@@ -96,17 +106,20 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Income: 5M VND/tháng tiền nhà túi (gia đình hỗ trợ)
 
 **Tâm lý**:
+
 - Đang thầm thích bạn cùng lớp nhưng chưa tỏ tình
 - Muốn ghi lại những khoảnh khắc "nhỏ nhưng đáng nhớ" với crush
 - Sợ crush phát hiện → cần app private hoàn toàn
 - Ước mơ được tặng quà ngày crush sinh nhật nhưng chưa dám
 
 **Pain points**:
+
 - Viết note về crush trong Notes app → sợ bạn bè cầm máy thấy
 - Không có nơi lưu ảnh crush mà không sợ lộ (camera roll rủi ro)
 - Muốn đếm ngày biết crush nhưng couple apps đều require 2 người
 
 **Jobs to be done**:
+
 - Lưu trữ kỷ niệm một mình an toàn
 - Countdown mốc quan trọng (ngày gặp đầu tiên, sinh nhật crush)
 - Chuẩn bị gift ideas để sau này mua khi couple
@@ -121,6 +134,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 **Linh & Dũng, 21 tuổi, couple 6 tháng**
 
 **Demographics**:
+
 - Giới tính: Nữ (Linh), Nam (Dũng)
 - Tuổi: 20-22
 - Nghề nghiệp: Sinh viên/thực tập sinh
@@ -128,18 +142,21 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Thu nhập: 3-7M VND/tháng
 
 **Tâm lý**:
+
 - Couple mới 3-9 tháng, giai đoạn "đắm đuối"
 - Muốn tặng quà bất ngờ cho nhau nhưng không biết người yêu thích gì
 - Thích flex couple moments lên TikTok/Instagram
 - Sensitive về giá: 29k/tháng OK, 99k/tháng suy nghĩ
 
 **Pain points**:
+
 - Hỏi trực tiếp "Em muốn quà gì?" → mất surprise
 - Ghi note wish riêng nhưng người yêu cầm máy thấy → hỏng hết
 - App couple nước ngoài không có tiếng Việt, không hiểu văn hóa VN
 - Muốn chia sẻ couple milestones lên social nhưng app hiện tại không cho export
 
 **Jobs to be done**:
+
 - Ghi wish list riêng mà người yêu không thấy
 - Chuẩn bị quà bí mật (chọn gift, mark "đang mua", đánh dấu "đã tặng")
 - Gửi thư tình hẹn giờ (kỷ niệm 100 ngày, sinh nhật)
@@ -155,6 +172,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 **Hương & Minh, 24 tuổi, couple xa 2 năm**
 
 **Demographics**:
+
 - Giới tính: Nữ (Hương - Hà Nội), Nam (Minh - HCMC)
 - Tuổi: 23-25
 - Nghề nghiệp: Nhân viên văn phòng
@@ -162,12 +180,14 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Gặp nhau: 1-2 lần/tháng
 
 **Pain points**:
+
 - Xa nhau → muốn gửi thư hẹn giờ để "gặp nhau qua chữ"
 - Quên sinh nhật/kỷ niệm vì bận → cần reminder + auto letter
 - Khó tặng quà vật lý → wish list giúp order online
 - Thiếu ritual hàng ngày → cần daily check-in nhẹ nhàng
 
 **Jobs to be done**:
+
 - Scheduled letters gửi 12h đêm mỗi thứ 7
 - Countdown đến ngày gặp
 - Wish list để order quà online ship tận nhà
@@ -195,6 +215,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 0: Foundation (Tuần 1-3)
 
 **Deliverables**:
+
 - Next.js 16 + Supabase project setup
 - Better-Auth integration với JWT app_metadata
 - Database schema với RLS policies (couple-only)
@@ -205,6 +226,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 **Tech debt**: Không có — foundation phải sạch.
 
 **Exit criteria**:
+
 - Auth flow hoàn chỉnh (signup, login, email verification)
 - RLS test pass 100%
 - Theme toggle hoạt động
@@ -214,18 +236,21 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 1: Couple Core (Tuần 4-8)
 
 **Epic 1.1: Wishes**
+
 - Ghi wish cá nhân (title, description, link, price estimate)
 - Wish list của mình (xem/edit/delete)
 - Mark wish: "Mơ ước" / "Đã nhắc đến" / "Đã nhận"
 - RLS: Partner không thể thấy wish của mình qua database
 
 **Epic 1.2: Secrets (Preparing Gifts)**
+
 - Chọn wish của partner để "bí mật chuẩn bị"
 - Secret status: "Đang nghĩ" / "Đang mua" / "Đã mua" / "Đã tặng"
 - RLS: Partner A không thể thấy secret đang prepare của Partner B
 - Mark "Gifted" → wish chuyển sang "Đã nhận" + hiển thị trong Memories
 
 **Epic 1.3: Scheduled Letters (Text-only MVP)**
+
 - Compose letter với rich text editor (Tiptap)
 - Schedule: ngày/giờ cụ thể hoặc kỷ niệm (100 days, 1 year)
 - Hẹn giờ gửi qua Trigger.dev
@@ -233,17 +258,20 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Lưu trữ letters trong archive
 
 **Epic 1.4: Emoji Ping (Mưa Tim)**
+
 - Nút "Send Hearts" → mưa tim animation trên màn hình partner
 - Realtime qua Supabase Realtime
 - History log (ai gửi, khi nào)
 
 **Epic 1.5: Memories Vault**
+
 - Upload photo (Cloudflare R2)
 - Ghi caption + date
 - Gallery view theo timeline
 - Delete/edit caption
 
 **Exit criteria**:
+
 - Couple có thể hoàn thành flow: Wish → Secret prepare → Gift → Memory
 - Scheduled letter gửi đúng giờ 100%
 - Realtime ping latency <500ms
@@ -253,6 +281,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 2: Viral Hooks (Tuần 9-12)
 
 **Epic 2.1: Wish Card Shareable**
+
 - Tạo Wish Card (template đẹp, màu pastel Gen Z)
 - Preview wish trên card: "Ước mơ của em: [item]" + ảnh/icon
 - Nút "Share to Story" → Export PNG tối ưu Instagram/TikTok
@@ -260,8 +289,9 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Viral goal**: User share lên IG Story → bạn bè thấy → tải app
 
 **Epic 2.2: Wrapped Recap Cuối Năm**
+
 - "2026 với anh/em" — tổng kết năm Spotify-style
-- Stats: 
+- Stats:
   - X wishes đã ghi
   - Y gifts đã tặng
   - Z letters đã gửi
@@ -271,6 +301,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Hashtag: #HiddenGiftWrapped2026
 
 **Epic 2.3: Home Widget (iOS/Android ambition)**
+
 - **Reality check**: iOS/Android đều chưa support PWA widget (tháng 5/2026)
 - **MVP**: Web push notification với rich media thay thế
   - Daily love note push notification
@@ -280,6 +311,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
   - "Days together" counter widget
 
 **Epic 2.4: Solo Crush Diary Mode**
+
 - Onboarding: "Single" vs "In a relationship"
 - Single mode: Crush Vault (private diary)
 - Countdown: "X days since I met them"
@@ -287,6 +319,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Upgrade flow: "Tỏ tình thành công? Mời crush join Couple Zone"
 
 **Exit criteria**:
+
 - 10%+ users share Wish Card lên social
 - Wrapped feature ready deploy tháng 12
 - Solo mode có >20% signups chọn (conversion metric)
@@ -296,12 +329,14 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 3: Monetization (Tuần 13-16)
 
 **Epic 3.1: PayOS Integration**
+
 - PayOS SDK integration (Node.js)
 - Checkout flow: chọn plan → PayOS payment link → webhook confirm
 - Subscription management: active/expired status
 - Grace period: 3 ngày sau expire vẫn dùng được
 
 **Epic 3.2: Pro Feature Gating**
+
 - Free tier limits:
   - 5 wishes active
   - 3 scheduled letters/tháng
@@ -316,17 +351,20 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
   - AI gift suggestion (Claude Haiku)
 
 **Epic 3.3: Pricing Page**
+
 - So sánh Free vs Pro
 - FAQ: Thanh toán thế nào? Hủy thế nào?
 - CTA: "Dùng thử FREE trước" → "Upgrade Pro"
 - Social proof: "500+ couples đang dùng Pro"
 
 **Epic 3.4: Revenue Tracking**
+
 - Supabase table: `subscriptions`
 - PostHog event: `subscription_created`, `subscription_renewed`
 - Dashboard: MRR, churn rate, LTV
 
 **Exit criteria**:
+
 - Payment flow hoạt động 100%
 - 2-4% free users convert sang Pro (industry benchmark)
 
@@ -335,6 +373,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 4: Scale Prep (Tuần 17-20)
 
 **Epic 4.1: Squad Feature Flag Unlock**
+
 - Multi-tenant schema đã sẵn sàng từ Phase 0
 - Feature flag: `enable_squad_mode`
 - Squad: 3-8 người
@@ -342,17 +381,20 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - Use case: Secret Santa, birthday pool
 
 **Epic 4.2: Performance Optimization**
+
 - RLS query optimization (wrap auth.uid() trong SELECT)
 - CDN cho Cloudflare R2 images
 - Database indexing tuning
 - Lazy loading cho memories gallery
 
 **Epic 4.3: Analytics Deep Dive**
+
 - PostHog funnels: Signup → Couple link → First wish → First gift → Pro
 - Session replay cho drop-off analysis
 - Feature flags A/B test: Pricing tiers
 
 **Exit criteria**:
+
 - Squad mode beta test với 50 squads
 - P95 latency <300ms
 - Conversion funnel clarity
@@ -362,18 +404,21 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### Phase 5: Family + International (V3 — Tháng 6-12)
 
 **Epic 5.1: Family Mode**
+
 - Parent-child relationships
 - Age verification (<16 require parental consent per VN law)
 - Family wish pool: Kids ghi wish, parents thấy
 - Compliance: COPPA-K readiness
 
 **Epic 5.2: International Expansion**
+
 - English localization
 - Stripe integration (thay PayOS)
 - Currency support (USD, SGD, THB)
 - Server placement: Singapore, US-West
 
 **Epic 5.3: Advanced Features**
+
 - Voice message letters
 - Video letters (30s max)
 - AI gift suggestion nâng cao (Claude Sonnet)
@@ -385,45 +430,47 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 
 ### 5.1 Core Features (MVP — Phase 1)
 
-| Feature | Description | RLS Pattern | Priority |
-|---------|-------------|-------------|----------|
-| **Wish List** | User ghi điều ước riêng | `user_id = auth.uid()` | P0 |
-| **Secret Prepare** | Chuẩn bị quà bí mật cho partner | `prepared_by = auth.uid()` + asymmetric visibility | P0 |
-| **Scheduled Letters** | Gửi thư hẹn giờ (text-only MVP) | `sender_id = auth.uid() OR recipient_id = auth.uid()` | P0 |
-| **Emoji Ping** | Mưa tim realtime | Realtime channel per couple | P0 |
-| **Memories Vault** | Lưu ảnh/video/caption | `couple_id IN (user's couples)` | P0 |
-| **Daily Love Note** | Prompt ngẫu nhiên mỗi ngày (optional) | Public content, per-couple response | P1 |
+| Feature               | Description                           | RLS Pattern                                           | Priority |
+| --------------------- | ------------------------------------- | ----------------------------------------------------- | -------- |
+| **Wish List**         | User ghi điều ước riêng               | `user_id = auth.uid()`                                | P0       |
+| **Secret Prepare**    | Chuẩn bị quà bí mật cho partner       | `prepared_by = auth.uid()` + asymmetric visibility    | P0       |
+| **Scheduled Letters** | Gửi thư hẹn giờ (text-only MVP)       | `sender_id = auth.uid() OR recipient_id = auth.uid()` | P0       |
+| **Emoji Ping**        | Mưa tim realtime                      | Realtime channel per couple                           | P0       |
+| **Memories Vault**    | Lưu ảnh/video/caption                 | `couple_id IN (user's couples)`                       | P0       |
+| **Daily Love Note**   | Prompt ngẫu nhiên mỗi ngày (optional) | Public content, per-couple response                   | P1       |
 
 ### 5.2 Viral Features (Phase 2)
 
-| Feature | Description | Viral Mechanic | Priority |
-|---------|-------------|----------------|----------|
-| **Wish Card Share** | Template đẹp share lên IG/TikTok | Export PNG, watermark subtle | P0 |
-| **Wrapped Recap** | Tổng kết năm Spotify-style | Shareable video, hashtag campaign | P0 |
-| **Solo Crush Mode** | Private diary cho người chưa couple | Gateway to paid conversion | P0 |
-| **Widget (Future)** | Home screen widget iOS/Android | Requires React Native wrapper | P2 |
+| Feature             | Description                         | Viral Mechanic                    | Priority |
+| ------------------- | ----------------------------------- | --------------------------------- | -------- |
+| **Wish Card Share** | Template đẹp share lên IG/TikTok    | Export PNG, watermark subtle      | P0       |
+| **Wrapped Recap**   | Tổng kết năm Spotify-style          | Shareable video, hashtag campaign | P0       |
+| **Solo Crush Mode** | Private diary cho người chưa couple | Gateway to paid conversion        | P0       |
+| **Widget (Future)** | Home screen widget iOS/Android      | Requires React Native wrapper     | P2       |
 
 ### 5.3 Pro Features (Phase 3)
 
-| Feature | Free Tier | Pro Tier (29k/149k) |
-|---------|-----------|---------------------|
-| Wishes active | 5 max | Unlimited |
-| Scheduled letters | 3/tháng | Unlimited |
-| Storage | 100MB | 5GB |
-| AI gift suggestions | 0 | 10/tháng (Claude Haiku) |
-| Wrapped export | Basic (không video) | HD video + music |
-| Priority support | Email (48h) | Chat (4h) |
-| Ad-free | Có ads nhẹ | No ads |
+| Feature             | Free Tier           | Pro Tier (29k/149k)     |
+| ------------------- | ------------------- | ----------------------- |
+| Wishes active       | 5 max               | Unlimited               |
+| Scheduled letters   | 3/tháng             | Unlimited               |
+| Storage             | 100MB               | 5GB                     |
+| AI gift suggestions | 0                   | 10/tháng (Claude Haiku) |
+| Wrapped export      | Basic (không video) | HD video + music        |
+| Priority support    | Email (48h)         | Chat (4h)               |
+| Ad-free             | Có ads nhẹ          | No ads                  |
 
 ### 5.4 Squad/Family Features (Phase 4-5)
 
 **Squad Mode** (3-8 người):
+
 - Shared wish pool
 - Secret Santa assign
 - Birthday countdown
 - Gift contribution pooling
 
 **Family Mode** (4-12 người):
+
 - Parent-child roles
 - Kids wish list (parents thấy tất cả)
 - Family calendar integration
@@ -436,7 +483,8 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 6.1 Frontend
 
 **Framework**: Next.js 16.2.6 (stable, released May 2026)
-- **Lý do chọn**: 
+
+- **Lý do chọn**:
   - Turbopack default (5-10× faster builds)
   - React 19.2 integration
   - App Router với enhanced routing
@@ -445,7 +493,8 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Production-ready**: ✅ Vercel đang chạy Next.js 16 cho chính họ
 
 **UI Library**: React 19.2.6
-- **Lý do chọn**: 
+
+- **Lý do chọn**:
   - Server Components standardized
   - Actions cho form mutations
   - useOptimistic cho UI tạm thời
@@ -453,6 +502,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Alternative**: React 18 LTS nếu team muốn max stability (trade-off: không có compiler)
 
 **Styling**: Tailwind CSS v4.3
+
 - **Lý do chọn**:
   - 5× faster builds với Rust engine (Oxide)
   - CSS-first config (không cần tailwind.config.js)
@@ -461,6 +511,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Migration**: Auto upgrade tool `npx @tailwindcss/upgrade`
 
 **Component Library**: shadcn/ui (CLI v4)
+
 - **Lý do chọn**:
   - Copy-paste approach (own the code)
   - Zero vendor lock-in
@@ -470,11 +521,13 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Bundle size**: ~20-50KB (chỉ import components dùng)
 
 **State Management**:
+
 - **Server State**: Tanstack Query v5 (cache Supabase data)
 - **Client State**: Zustand (lightweight, 1KB)
 - **Form State**: React Hook Form + Zod validation
 
 **Rich Text Editor**: Tiptap v2
+
 - **Lý do**: Headless, extensible, collaborative-ready (future)
 - **Use case**: Scheduled letters compose
 
@@ -483,6 +536,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 6.2 Backend & Database
 
 **BaaS**: Supabase Pro ($25/mo)
+
 - **Database**: PostgreSQL 15 với RLS
 - **Auth**: Supabase Auth (JWT với app_metadata)
 - **Storage**: 100GB included (Cloudflare R2 cho overflow)
@@ -490,6 +544,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Edge Functions**: Deno runtime (nếu cần custom logic)
 
 **Authentication**: Better-Auth v1.6.11
+
 - **Lý do chọn thay NextAuth**:
   - Multi-tenancy built-in
   - TypeScript-first
@@ -499,6 +554,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Methods**: Email/password, Google OAuth, Apple Sign In (VN launched Jan 2026)
 
 **Background Jobs**: Trigger.dev ($10/mo Hobby plan)
+
 - **Lý do chọn thay Inngest/pg_cron**:
   - Cheapest entry ($10 vs $75)
   - 50K runs free tier
@@ -511,33 +567,39 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 6.3 Infrastructure
 
 **Hosting**: Vercel Pro ($20/user/mo)
+
 - 1TB bandwidth included
 - Edge Network global
 - Zero-config deployment
 - Preview environments per PR
 
 **Media Storage**: Cloudflare R2
+
 - **$0 egress** (massive savings vs S3)
 - $0.015/GB storage
 - S3-compatible API
 - **Cost estimate**: $20-30/mo cho 1-2TB
 
 **Realtime**: Supabase Realtime (included)
+
 - WebSocket connections
 - Row-level subscriptions
 - Presence tracking
 - **Alternative nếu scale**: Ably ($29/mo) cho 10K connections
 
 **AI**: Vercel AI SDK v6 + Claude Haiku 4.5
+
 - **Cost**: ~$25-35/mo cho 500 gift suggestions/day
 - Prompt caching (90% discount)
 - Provider-agnostic (dễ switch sang GPT nếu cần)
 
 **Email**: Resend (Free 3K emails/mo)
+
 - Transactional emails (welcome, verification, letter notifications)
 - **Upgrade**: $20/mo Pro cho 50K emails
 
 **Cache/Rate Limiting**: Upstash Redis (Free 500K commands)
+
 - Session storage
 - Rate limiting per user
 - Realtime presence cache
@@ -547,6 +609,7 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 6.4 Observability
 
 **Analytics**: PostHog (Free 1M events/mo)
+
 - Product analytics
 - Feature flags (1M requests free)
 - Session replay
@@ -554,20 +617,24 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Replaces**: Mixpanel + LaunchDarkly + Hotjar
 
 **Error Tracking**: Sentry (Free 5K errors/mo)
+
 - **Upgrade**: Team $26/mo cho 50K errors
 - Source maps upload
 - Performance monitoring
 
 **Logs**: Vercel Logs (included)
+
 - Function logs
 - Edge logs
 - **Upgrade**: Axiom integration nếu cần longer retention
 
 **Uptime Monitoring**: Better Uptime (Free tier)
+
 - Status page
 - Incident management
 
 **Privacy-First Analytics**: Plausible ($9/mo)
+
 - GDPR compliant
 - No cookies
 - Simple metrics cho marketing site
@@ -577,7 +644,8 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 ### 6.5 Payments & Compliance
 
 **Payment Gateway**: PayOS (FREE 0% fees!)
-- **Lý do chọn**: 
+
+- **Lý do chọn**:
   - 0% transaction fee (revolutionary, launched Jan 2026)
   - Vietnamese-first
   - VietQR support
@@ -587,12 +655,14 @@ Chúng tôi tin rằng những điều ước, món quà bất ngờ, và khoả
 - **Future**: Add Stripe cho international expansion (V2)
 
 **Feature Flags**: PostHog Feature Flags (included)
+
 - Boolean flags
 - Multivariate testing
 - Gradual rollout
 - **Use cases**: Squad mode enable, pricing experiments
 
-**Compliance**: 
+**Compliance**:
+
 - **Privacy Policy**: Vietnamese + English
 - **Data Protection Impact Assessment (DPIA)**: Required within 60 days (VN PDPL 2026)
 - **RLS enforcement**: Database-level privacy
@@ -651,7 +721,7 @@ CREATE TABLE public.accounts (
   created_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   metadata JSONB DEFAULT '{}'::jsonb,
-  
+
   -- Feature flags per account
   enable_squad BOOLEAN DEFAULT false,
   enable_family BOOLEAN DEFAULT false
@@ -677,7 +747,7 @@ CREATE TABLE public.account_members (
   role member_role NOT NULL DEFAULT 'member',
   nickname TEXT, -- "My Love", "Bé Yêu"
   joined_at TIMESTAMPTZ DEFAULT now(),
-  
+
   UNIQUE(account_id, user_id)
 );
 
@@ -706,23 +776,23 @@ CREATE TABLE public.wishes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Wish content
   title TEXT NOT NULL,
   description TEXT,
   link TEXT, -- Product URL
   price_estimate INTEGER, -- VND
   image_url TEXT,
-  
+
   -- Status
   status wish_status DEFAULT 'active',
-  
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   mentioned_at TIMESTAMPTZ, -- Ngày user nhắc đến wish
   received_at TIMESTAMPTZ, -- Ngày nhận quà
-  
+
   -- Search
   search_vector tsvector GENERATED ALWAYS AS (
     to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(description, ''))
@@ -761,29 +831,29 @@ CREATE TYPE secret_status AS ENUM ('thinking', 'buying', 'bought', 'gifted');
 CREATE TABLE public.secrets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  
+
   -- Who is preparing
   prepared_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- For whom (recipient)
   recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Link to wish (nullable: có thể prepare gift không trong wish list)
   wish_id UUID REFERENCES public.wishes(id) ON DELETE SET NULL,
-  
+
   -- Secret content
   gift_name TEXT NOT NULL,
   notes TEXT, -- Ghi chú riêng
   estimated_date DATE, -- Dự kiến tặng ngày nào
-  
+
   -- Status
   status secret_status DEFAULT 'thinking',
-  
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   gifted_at TIMESTAMPTZ, -- Actual gift date
-  
+
   -- Constraint: không tự prepare cho chính mình
   CHECK (prepared_by != recipient_id)
 );
@@ -836,27 +906,27 @@ CREATE TYPE letter_status AS ENUM ('draft', 'scheduled', 'sent', 'read');
 CREATE TABLE public.letters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  
+
   -- Sender & recipient
   sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Letter content
   subject TEXT,
   body TEXT NOT NULL, -- Rich text HTML
-  
+
   -- Scheduling
   scheduled_at TIMESTAMPTZ NOT NULL,
   sent_at TIMESTAMPTZ,
   read_at TIMESTAMPTZ,
-  
+
   -- Status
   status letter_status DEFAULT 'draft',
-  
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
-  
+
   -- Constraint: không tự gửi thư cho chính mình (có thể bỏ nếu muốn allow)
   CHECK (sender_id != recipient_id)
 );
@@ -871,7 +941,7 @@ ALTER TABLE public.letters ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view letters they sent or received"
 ON public.letters FOR SELECT
 USING (
-  (SELECT auth.uid()) = sender_id 
+  (SELECT auth.uid()) = sender_id
   OR (SELECT auth.uid()) = recipient_id
 );
 
@@ -882,7 +952,7 @@ WITH CHECK ((SELECT auth.uid()) = sender_id);
 CREATE POLICY "Users can update letters they created (before sent)"
 ON public.letters FOR UPDATE
 USING (
-  (SELECT auth.uid()) = sender_id 
+  (SELECT auth.uid()) = sender_id
   AND status IN ('draft', 'scheduled')
 );
 
@@ -895,19 +965,19 @@ CREATE TYPE memory_type AS ENUM ('photo', 'video', 'voice', 'text');
 CREATE TABLE public.memories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  
+
   -- Created by
   created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Memory content
   memory_type memory_type NOT NULL,
   media_url TEXT, -- Cloudflare R2 URL
   caption TEXT,
   memory_date DATE DEFAULT CURRENT_DATE,
-  
+
   -- Linked to gift (nếu memory này là ảnh tặng quà)
   secret_id UUID REFERENCES public.secrets(id) ON DELETE SET NULL,
-  
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
@@ -943,15 +1013,15 @@ WITH CHECK (
 CREATE TABLE public.emoji_pings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  
+
   -- Sender & recipient
   sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Emoji type (future: nhiều loại emoji)
   emoji_type TEXT DEFAULT '❤️',
   count INTEGER DEFAULT 1, -- Số lượng emoji (mưa nhiều/ít)
-  
+
   -- Timestamp
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -981,28 +1051,28 @@ CREATE TYPE subscription_plan AS ENUM ('free', 'pro_monthly', 'pro_annual');
 CREATE TABLE public.subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  
+
   -- Plan details
   plan subscription_plan NOT NULL DEFAULT 'free',
   status subscription_status NOT NULL DEFAULT 'active',
-  
+
   -- Billing
   amount INTEGER, -- VND
   currency TEXT DEFAULT 'VND',
-  
+
   -- Periods
   current_period_start TIMESTAMPTZ,
   current_period_end TIMESTAMPTZ,
-  
+
   -- PayOS integration
   payos_order_id TEXT,
   payos_payment_link TEXT,
-  
+
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   canceled_at TIMESTAMPTZ,
-  
+
   UNIQUE(account_id) -- One subscription per account
 );
 
@@ -1027,22 +1097,22 @@ CREATE TABLE public.wrapped_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
-  
+
   -- Computed stats (cached)
   total_wishes INTEGER DEFAULT 0,
   total_gifts INTEGER DEFAULT 0,
   total_letters INTEGER DEFAULT 0,
   total_memories INTEGER DEFAULT 0,
-  
+
   -- Badges/achievements
   badges JSONB DEFAULT '[]'::jsonb,
-  
+
   -- Exported media
   video_url TEXT, -- Wrapped video (R2 URL)
-  
+
   -- Metadata
   generated_at TIMESTAMPTZ DEFAULT now(),
-  
+
   UNIQUE(account_id, year)
 );
 
@@ -1071,11 +1141,13 @@ USING ((SELECT auth.uid()) = user_id)
 ```
 
 **Index requirements**:
+
 - Index trên `account_id` (tenant isolation key)
 - Index trên `user_id` (user-level policies)
 - Composite index: `(account_id, user_id)` cho joins
 
 **Testing RLS**:
+
 ```sql
 -- Test as specific user
 SET request.jwt.claims = '{"sub": "user-uuid-here", "role": "authenticated"}';
@@ -1150,38 +1222,42 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 ### 8.2 Revenue Model
 
 **Pricing**:
+
 - **Free**: Mãi mãi miễn phí (5 wishes, 3 letters/tháng, 100MB, ads)
 - **Pro Monthly**: 29,000 VND/tháng (~$1.20 USD)
 - **Pro Annual**: 149,000 VND/năm (~$6.20 USD, tiết kiệm 48%)
 
 **Conversion assumptions** (industry benchmark):
+
 - Free → Pro: 2-4% conversion rate
 - Annual vs Monthly: 60-70% chọn annual (VN market prefer upfront)
 
 **Revenue projections**:
 
-| MAU | Paid Users (3%) | Annual (70%) | Monthly (30%) | MRR (VND) | MRR (USD) |
-|-----|-----------------|--------------|---------------|-----------|-----------|
-| 1K | 30 | 21 @ 149K/12 | 9 @ 29K | ~521K | ~$21 |
-| 10K | 300 | 210 @ 12.4K | 90 @ 29K | ~5.2M | ~$217 |
-| 50K | 1,500 | 1,050 @ 12.4K | 450 @ 29K | ~26M | ~$1,083 |
-| 100K | 3,000 | 2,100 @ 12.4K | 900 @ 29K | ~52M | ~$2,167 |
+| MAU  | Paid Users (3%) | Annual (70%)  | Monthly (30%) | MRR (VND) | MRR (USD) |
+| ---- | --------------- | ------------- | ------------- | --------- | --------- |
+| 1K   | 30              | 21 @ 149K/12  | 9 @ 29K       | ~521K     | ~$21      |
+| 10K  | 300             | 210 @ 12.4K   | 90 @ 29K      | ~5.2M     | ~$217     |
+| 50K  | 1,500           | 1,050 @ 12.4K | 450 @ 29K     | ~26M      | ~$1,083   |
+| 100K | 3,000           | 2,100 @ 12.4K | 900 @ 29K     | ~52M      | ~$2,167   |
 
 **Breakeven analysis**:
 
 | MAU Level | Monthly Cost | Revenue @ 3% | Profit/Loss | Breakeven Conversion |
-|-----------|--------------|--------------|-------------|----------------------|
-| 1K | $115 | $21 | -$94 | ~16% (unrealistic) |
-| 10K | $470 | $217 | -$253 | ~6.5% (high) |
-| 50K | $1,817 | $1,083 | -$734 | ~5% (achievable) |
-| 100K | $3,500 | $2,167 | -$1,333 | ~5% (achievable) |
+| --------- | ------------ | ------------ | ----------- | -------------------- |
+| 1K        | $115         | $21          | -$94        | ~16% (unrealistic)   |
+| 10K       | $470         | $217         | -$253       | ~6.5% (high)         |
+| 50K       | $1,817       | $1,083       | -$734       | ~5% (achievable)     |
+| 100K      | $3,500       | $2,167       | -$1,333     | ~5% (achievable)     |
 
 **Path to 1 tỷ VND/năm MRR** (~$41.7K USD/year):
+
 - Cần: 83K VND/month MRR = ~$3,470/month
 - At 3% conversion: ~140K MAU
 - Timeline: 18-24 tháng nếu growth rate 20%/month
 
 **Realistic timeline**:
+
 - **Month 1-3**: <1K MAU, burn $100/mo (acceptable for MVP)
 - **Month 4-6**: 2-5K MAU, burn $200-300/mo
 - **Month 7-12**: 10-20K MAU, approaching breakeven
@@ -1191,6 +1267,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 ### 8.3 Cost Optimization Strategies
 
 **Khi scale**:
+
 1. **Cloudflare R2**: Zero egress = huge savings (S3 would cost $900 for 10TB egress)
 2. **Anthropic prompt caching**: 90% discount trên cached input
 3. **Supabase compute**: Chỉ upgrade khi thật sự cần (monitor CPU/RAM)
@@ -1199,6 +1276,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 6. **Email**: Batch notifications, digest emails thay vì realtime
 
 **Startup discounts** (đáng apply):
+
 - Supabase: Email startup@ cho credits
 - Vercel: Enterprise credits nếu có funding
 - PostHog: Startup program
@@ -1212,6 +1290,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 **Concept**: User tạo "Wish Card" đẹp để share lên Instagram/TikTok Story.
 
 **Flow**:
+
 1. User chọn wish từ wish list
 2. Tap "Create Wish Card"
 3. Chọn template (5-7 templates pastel, Gen Z aesthetic)
@@ -1221,6 +1300,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 7. Watermark nhẹ: "Hidden Gift 💝" ở góc dưới phải
 
 **Templates**:
+
 - **Dreamy Clouds**: Background pastel gradient, clouds illustration
 - **Starry Night**: Dark mode, stars, moon
 - **Floral Minimal**: Hoa lá minimal line art
@@ -1228,6 +1308,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 - **Film Grain**: Y2K aesthetic, film camera frame
 
 **Technical implementation**:
+
 - Canvas API hoặc `html-to-image` library
 - Pre-render templates
 - Export PNG optimized (<1MB)
@@ -1242,6 +1323,7 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 **Concept**: "2026 với anh/em" — Tổng kết năm couple.
 
 **Stats hiển thị**:
+
 1. **Khoảng khắc bắt đầu**: "X ngày bên nhau" (hoặc "Năm đầu tiên yêu nhau")
 2. **X wishes đã ghi**: "Em đã ước mơ X điều năm nay"
 3. **Y gifts đã tặng**: "Anh/Em đã tặng Y món quà"
@@ -1252,15 +1334,18 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 8. **Song recommendation**: "Bài hát dành cho hai đứa mình" (Spotify API hoặc hardcode trending VN)
 
 **Format**:
+
 - **Free tier**: Static slides (10 screens), screenshot để share
 - **Pro tier**: Animated video 30-60s với nhạc trending, export MP4
 
 **Shareable elements**:
+
 - Hashtag: #HiddenGiftWrapped2026
 - Tag: @hiddengift.vn
 - Call-to-action: "Create yours at hiddengift.vn"
 
 **Technical implementation**:
+
 - Pre-compute stats vào đêm 31/12 (Trigger.dev job)
 - Store trong `wrapped_stats` table
 - Render: React components → Remotion video (Pro tier)
@@ -1273,15 +1358,18 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 **Reality check (May 2026)**: iOS và Android **không support PWA widget**.
 
 **Phase 1 (MVP)**: Rich push notifications thay thế
+
 - Daily love note push
 - "Partner sent you hearts 💕" với custom image
 - Countdown notification: "3 days until anniversary"
 
 **Phase 2 (Q4 2026)**: Monitor iOS 19 (Sept 2026) release
+
 - Nếu Apple announce widget API → plan native wrapper
 - Android PWA widget: Follow Chromium issue tracker
 
 **Phase 3 (2027)**: React Native wrapper nếu widgets critical
+
 - Keep PWA core
 - Thin native shell cho widget only
 - Widgets:
@@ -1294,8 +1382,9 @@ SELECT * FROM wishes; -- Should only see that user's wishes
 ### 9.4 Solo → Couple Conversion Flow
 
 **Onboarding**:
+
 ```
-Step 1: "Chào mừng! Bạn đang..." 
+Step 1: "Chào mừng! Bạn đang..."
         [○ Single/Có crush] [○ In a relationship]
 
 Step 2a (Single): "Crush Vault của bạn"
@@ -1309,6 +1398,7 @@ Step 2b (Couple): "Tạo Couple Zone"
 ```
 
 **Conversion trigger**:
+
 - Sau 30 ngày Solo mode:
   - Push notification: "Tỏ tình thành công chưa? Mời crush join Couple Zone ngay!"
   - In-app modal: "Upgrade to Couple Zone"
@@ -1323,6 +1413,7 @@ Step 2b (Couple): "Tạo Couple Zone"
 ### 10.1 PayOS Integration
 
 **Why PayOS** (May 2026):
+
 - **0% transaction fees** (revolutionary, launched Jan 2026)
 - Vietnamese-first, VietQR native
 - Clean API, well-documented
@@ -1334,18 +1425,18 @@ Step 2b (Couple): "Tạo Couple Zone"
 // 1. User clicks "Upgrade to Pro"
 // 2. Generate PayOS payment link
 
-import { PayOS } from '@payos/node';
+import { PayOS } from "@payos/node";
 
 const payos = new PayOS({
   clientId: process.env.PAYOS_CLIENT_ID,
   apiKey: process.env.PAYOS_API_KEY,
-  checksumKey: process.env.PAYOS_CHECKSUM_KEY
+  checksumKey: process.env.PAYOS_CHECKSUM_KEY,
 });
 
-async function createSubscription(accountId: string, plan: 'monthly' | 'annual') {
-  const amount = plan === 'monthly' ? 29000 : 149000;
+async function createSubscription(accountId: string, plan: "monthly" | "annual") {
+  const amount = plan === "monthly" ? 29000 : 149000;
   const orderCode = `SUB-${accountId}-${Date.now()}`;
-  
+
   const paymentLink = await payos.createPaymentLink({
     orderCode,
     amount,
@@ -1353,104 +1444,104 @@ async function createSubscription(accountId: string, plan: 'monthly' | 'annual')
     returnUrl: `${process.env.APP_URL}/payment/success`,
     cancelUrl: `${process.env.APP_URL}/payment/cancel`,
   });
-  
+
   // Store pending subscription
-  await supabase.from('subscriptions').insert({
+  await supabase.from("subscriptions").insert({
     account_id: accountId,
     plan: `pro_${plan}`,
-    status: 'pending',
+    status: "pending",
     amount,
     payos_order_id: orderCode,
-    payos_payment_link: paymentLink.checkoutUrl
+    payos_payment_link: paymentLink.checkoutUrl,
   });
-  
+
   return paymentLink.checkoutUrl;
 }
 
 // 3. User completes payment
 // 4. PayOS webhook confirms
 
-import { validateWebhook } from '@payos/node';
+import { validateWebhook } from "@payos/node";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  
+
   // Verify signature
-  const isValid = validateWebhook(body, request.headers.get('x-payos-signature'));
-  if (!isValid) return new Response('Invalid signature', { status: 400 });
-  
+  const isValid = validateWebhook(body, request.headers.get("x-payos-signature"));
+  if (!isValid) return new Response("Invalid signature", { status: 400 });
+
   // Update subscription
-  if (body.code === '00') { // Success
+  if (body.code === "00") {
+    // Success
     const { orderCode } = body.data;
-    
+
     await supabase
-      .from('subscriptions')
+      .from("subscriptions")
       .update({
-        status: 'active',
+        status: "active",
         current_period_start: new Date(),
-        current_period_end: addMonths(new Date(), plan === 'annual' ? 12 : 1)
+        current_period_end: addMonths(new Date(), plan === "annual" ? 12 : 1),
       })
-      .eq('payos_order_id', orderCode);
-      
+      .eq("payos_order_id", orderCode);
+
     // Send confirmation email
     await resend.emails.send({
       to: userEmail,
-      subject: 'Chào mừng bạn đến với Hidden Gift Pro! 💝',
-      html: proWelcomeTemplate
+      subject: "Chào mừng bạn đến với Hidden Gift Pro! 💝",
+      html: proWelcomeTemplate,
     });
   }
-  
-  return new Response('OK');
+
+  return new Response("OK");
 }
 
 // 5. Recurring billing (manual approach)
 // Trigger.dev job chạy hàng ngày check subscriptions sắp hết hạn
 
 export const subscriptionRenewal = job({
-  id: 'subscription-renewal',
-  name: 'Check and renew subscriptions',
-  version: '1.0.0',
+  id: "subscription-renewal",
+  name: "Check and renew subscriptions",
+  version: "1.0.0",
   trigger: cronTrigger({
-    cron: '0 1 * * *' // 1am daily
+    cron: "0 1 * * *", // 1am daily
   }),
   run: async (payload, io) => {
     // Find subscriptions expiring in 7 days
-    const expiringSubscriptions = await io.supabase.runTask(
-      'fetch-expiring',
-      async () => {
-        const { data } = await supabase
-          .from('subscriptions')
-          .select('*, accounts!inner(id), account_members!inner(user_id, profiles(email))')
-          .eq('status', 'active')
-          .lte('current_period_end', addDays(new Date(), 7));
-        return data;
-      }
-    );
-    
+    const expiringSubscriptions = await io.supabase.runTask("fetch-expiring", async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("*, accounts!inner(id), account_members!inner(user_id, profiles(email))")
+        .eq("status", "active")
+        .lte("current_period_end", addDays(new Date(), 7));
+      return data;
+    });
+
     for (const sub of expiringSubscriptions) {
       // Send renewal reminder email
-      await io.resend.sendEmail('renewal-reminder', {
+      await io.resend.sendEmail("renewal-reminder", {
         to: sub.account_members[0].profiles.email,
-        subject: 'Hidden Gift Pro sắp hết hạn - Gia hạn ngay!',
-        html: renewalReminderTemplate(sub)
+        subject: "Hidden Gift Pro sắp hết hạn - Gia hạn ngay!",
+        html: renewalReminderTemplate(sub),
       });
-      
+
       // Generate new payment link for manual renewal
       const paymentLink = await createSubscription(sub.account_id, sub.plan);
-      
+
       // Include link in email
     }
-  }
+  },
 });
 ```
 
 **Subscription logic**:
+
 - Monthly: Email reminder 7 days trước expire → user click link renew manually
 - Annual: Email reminder 30 days trước expire
 - Grace period: 3 ngày sau expire vẫn dùng Pro → sau đó downgrade về Free
 - Auto-charge: KHÔNG SUPPORT (PayOS limitation) → accept manual renewal friction
 
 **Upgrade path V2**:
+
 - Add Stripe cho international users
 - Stripe Billing supports true recurring
 - MoMo tokenization cho auto-recurring (if available)
@@ -1463,48 +1554,45 @@ export const subscriptionRenewal = job({
 // Middleware check subscription status
 export async function checkProAccess(accountId: string): Promise<boolean> {
   const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('status, current_period_end')
-    .eq('account_id', accountId)
+    .from("subscriptions")
+    .select("status, current_period_end")
+    .eq("account_id", accountId)
     .single();
-    
+
   if (!sub) return false; // Free tier
-  
-  if (sub.status !== 'active') return false;
-  
+
+  if (sub.status !== "active") return false;
+
   // Check not expired (including grace period)
   const gracePeriodEnd = addDays(new Date(sub.current_period_end), 3);
   if (isAfter(new Date(), gracePeriodEnd)) {
     // Auto-downgrade
-    await supabase
-      .from('subscriptions')
-      .update({ status: 'expired' })
-      .eq('account_id', accountId);
+    await supabase.from("subscriptions").update({ status: "expired" }).eq("account_id", accountId);
     return false;
   }
-  
+
   return true;
 }
 
 // Feature gates
 export async function createWish(accountId: string, wishData: WishData) {
   const isPro = await checkProAccess(accountId);
-  
+
   if (!isPro) {
     // Check free tier limit
     const { count } = await supabase
-      .from('wishes')
-      .select('*', { count: 'exact', head: true })
-      .eq('account_id', accountId)
-      .eq('status', 'active');
-      
+      .from("wishes")
+      .select("*", { count: "exact", head: true })
+      .eq("account_id", accountId)
+      .eq("status", "active");
+
     if (count >= 5) {
-      throw new Error('FREE_TIER_LIMIT_REACHED');
+      throw new Error("FREE_TIER_LIMIT_REACHED");
     }
   }
-  
+
   // Proceed with creation
-  return supabase.from('wishes').insert({ account_id: accountId, ...wishData });
+  return supabase.from("wishes").insert({ account_id: accountId, ...wishData });
 }
 ```
 
@@ -1514,27 +1602,27 @@ export async function createWish(accountId: string, wishData: WishData) {
 
 **Comparison table**:
 
-| Tính năng | FREE | PRO |
-|-----------|------|-----|
-| Wishes | 5 wishes | ✨ Unlimited |
-| Scheduled Letters | 3 letters/tháng | ✨ Unlimited |
-| Storage | 100MB | ✨ 5GB |
-| AI Gift Suggestions | ❌ | ✨ 10/tháng |
-| Wrapped Recap | Cơ bản | ✨ HD Video + Music |
-| Priority Support | Email 48h | ✨ Chat 4h |
-| Ads | Có | ✨ Không ads |
+| Tính năng           | FREE            | PRO                 |
+| ------------------- | --------------- | ------------------- |
+| Wishes              | 5 wishes        | ✨ Unlimited        |
+| Scheduled Letters   | 3 letters/tháng | ✨ Unlimited        |
+| Storage             | 100MB           | ✨ 5GB              |
+| AI Gift Suggestions | ❌              | ✨ 10/tháng         |
+| Wrapped Recap       | Cơ bản          | ✨ HD Video + Music |
+| Priority Support    | Email 48h       | ✨ Chat 4h          |
+| Ads                 | Có              | ✨ Không ads        |
 
 **CTA**:
+
 - "Dùng thử FREE" (primary)
 - "Nâng cấp Pro ngay — 29k/tháng" (secondary)
 
 **FAQ**:
+
 - Q: Thanh toán thế nào?
   A: Qua VietQR, Momo, thẻ nội địa qua PayOS.
-  
 - Q: Hủy thế nào?
   A: Không tự động gia hạn. Sau khi hết hạn, bạn chuyển về FREE.
-  
 - Q: Nếu upgrade giữa tháng?
   A: Tính từ ngày upgrade, không tính lại từ đầu tháng.
 
@@ -1547,10 +1635,12 @@ export async function createWish(accountId: string, wishData: WishData) {
 **Vietnam Personal Data Protection Law** (Law No. 91/2025/QH15) có hiệu lực **1/1/2026**.
 
 **Applicability**: ✅ Hidden Gift phải tuân thủ vì:
+
 - Thu thập data từ người Việt Nam
 - Xử lý sensitive data (location, photos)
 
 **Critical deadlines**:
+
 - **DPIA submission**: Trong 60 ngày sau khi bắt đầu xử lý data
 - **Breach notification**: 72 giờ sau khi phát hiện
 - **User request response**: 2 ngày acknowledge, 10-30 ngày execute
@@ -1560,15 +1650,15 @@ export async function createWish(accountId: string, wishData: WishData) {
 **Granular consent checkboxes** (onboarding):
 
 ```
-☐ Tôi đồng ý cho Hidden Gift thu thập thông tin cơ bản (tên, email, ảnh đại diện) 
+☐ Tôi đồng ý cho Hidden Gift thu thập thông tin cơ bản (tên, email, ảnh đại diện)
   để tạo tài khoản và sử dụng dịch vụ.
 
 ☐ Tôi đồng ý cho Hidden Gift lưu trữ tin nhắn và thư của tôi để gửi hẹn giờ.
 
-☐ Tôi đồng ý cho Hidden Gift theo dõi vị trí để hiển thị trong tính năng 
+☐ Tôi đồng ý cho Hidden Gift theo dõi vị trí để hiển thị trong tính năng
   "Đang ở đâu" (có thể tắt bất cứ lúc nào).
 
-☐ Tôi đồng ý cho Hidden Gift lưu trữ dữ liệu trên máy chủ nước ngoài 
+☐ Tôi đồng ý cho Hidden Gift lưu trữ dữ liệu trên máy chủ nước ngoài
   (Singapore/US) để cung cấp dịch vụ tốt hơn.
 
 [Đọc Chính Sách Bảo Mật] [Điều Khoản Sử Dụng]
@@ -1577,12 +1667,14 @@ Bạn có thể rút lại sự đồng ý bất cứ lúc nào trong Cài Đặ
 ```
 
 **Technical**:
+
 - Store consent với timestamp, IP, consent version
 - Allow withdrawal trong Settings → Privacy
 
 ### 11.3 User Rights Portal
 
 **Required features**:
+
 - **View data**: Export all data về JSON/PDF
 - **Edit data**: Sửa profile, wishes, memories
 - **Delete data**: Xóa tài khoản + all data trong 20-30 ngày
@@ -1590,6 +1682,7 @@ Bạn có thể rút lại sự đồng ý bất cứ lúc nào trong Cài Đặ
 - **Data portability**: Export ZIP file
 
 **Implementation**:
+
 ```
 Settings → Privacy & Data
 ├── Download My Data (JSON export)
@@ -1601,11 +1694,13 @@ Settings → Privacy & Data
 ### 11.4 Data Storage Decision
 
 **Option A: Vietnam data center** (Recommended Phase 1)
+
 - Supabase Asia Pacific (Singapore) — gần Vietnam, latency thấp
 - Submit **Transfer Impact Assessment (TIA)** vì data ra ngoài VN
 - TIA deadline: 60 ngày, update mỗi 6 tháng
 
 **Option B: Vietnam local hosting** (Nếu >100K users)
+
 - AWS/GCP/Azure có data centers VN
 - Tránh TIA compliance
 - Chi phí cao hơn ~20-30%
@@ -1616,6 +1711,7 @@ Settings → Privacy & Data
 ### 11.5 Compliance Checklist
 
 **Pre-launch**:
+
 - [x] Privacy Policy tiếng Việt (hire legal translator)
 - [x] Terms of Service
 - [x] Consent management system
@@ -1627,12 +1723,14 @@ Settings → Privacy & Data
 - [ ] Submit TIA if cross-border storage
 
 **Ongoing**:
+
 - Update DPIA/TIA every 6 months
 - Respond to user requests within SLA (2 days ack, 10-30 days execute)
 - Monitor breach detection (72h report window)
 - Annual privacy audit
 
 **Budget**:
+
 - Legal consultation: $2,000-5,000 (one-time)
 - Part-time DPO consultant: $500-1,500/month
 - **Exemption**: 5-year grace period for startups NHƯNG không apply vì app xử lý sensitive data (location)
@@ -1644,14 +1742,16 @@ Settings → Privacy & Data
 ### 12.1 Technical Risks
 
 **Risk 1: RLS Performance at Scale**
+
 - **Concern**: RLS policies có thể slow queries khi >100K users
-- **Mitigation**: 
+- **Mitigation**:
   - Wrap `auth.uid()` trong SELECT
   - Index mọi column dùng trong policies
   - Monitor query performance với Supabase Dashboard
   - Fallback: Move to application-level filtering nếu RLS bottleneck
 
 **Risk 2: Realtime Concurrent Connections**
+
 - **Concern**: Supabase Realtime free tier 200 connections, Pro tier 500 → giới hạn couples
 - **Mitigation**:
   - Estimate: 500 connections = ~250 active couples concurrent
@@ -1659,6 +1759,7 @@ Settings → Privacy & Data
   - Optimize: Client disconnect khi app background
 
 **Risk 3: PayOS Recurring Limitations**
+
 - **Concern**: PayOS không có auto-recurring → manual renewal friction → churn
 - **Mitigation**:
   - Accept friction giai đoạn đầu
@@ -1669,6 +1770,7 @@ Settings → Privacy & Data
 ### 12.2 Business Risks
 
 **Risk 4: Conversion Rate Lower Than Expected**
+
 - **Concern**: 2-4% benchmark có thể không đạt (Gen Z price-sensitive)
 - **Mitigation**:
   - A/B test pricing: 29k vs 39k vs 49k
@@ -1677,6 +1779,7 @@ Settings → Privacy & Data
   - Social proof: "500+ couples đang dùng Pro"
 
 **Risk 5: Viral Mechanics Không Viral**
+
 - **Concern**: Wish Card/Wrapped không được share như kỳ vọng
 - **Mitigation**:
   - Incentivize: "Share lên Story → unlock 1 wish thêm"
@@ -1685,6 +1788,7 @@ Settings → Privacy & Data
   - Influencer seeding: Partner với couple influencers TikTok VN
 
 **Risk 6: Competition từ Locket/Between**
+
 - **Concern**: Locket pivot sang couple mode, hoặc Between localize VN
 - **Mitigation**:
   - Speed: Launch trước, capture market share
@@ -1695,21 +1799,25 @@ Settings → Privacy & Data
 ### 12.3 Product Questions
 
 **Q1: Solo mode có thực sự convert?**
+
 - Hypothesis: Solo users viết diary crush → 20% convert khi couple
 - Test: A/B test onboarding có/không Solo option
 - Fallback: Nếu <10% conversion, remove Solo mode Phase 2
 
 **Q2: AI gift suggestions giá trị thế nào?**
+
 - Concern: Claude Haiku output có "insightful" không hay generic?
 - Test: Beta với 50 couples, measure satisfaction
 - Fallback: Nếu NPS <7, bỏ AI feature, focus manual curation
 
 **Q3: Wrapped có viral như Spotify không?**
+
 - Unknown: VN market chưa có precedent (Locket Rewind 2025 là gần nhất)
 - Test: Soft launch Wrapped với 100 beta users trước
 - Measure: Share rate, hashtag usage, inbound signups từ social
 
 **Q4: Widget demand có high không nếu phải native app?**
+
 - Trade-off: React Native wrapper = 2-3 tháng extra dev + maintenance burden
 - Research: Survey users "Would you download native app for widget?" (need 70%+ yes)
 - Decision point: Month 6, after Wrapped launch
@@ -1760,6 +1868,7 @@ Settings → Privacy & Data
 ## 14. NEXT STEPS (IMMEDIATE ACTIONS)
 
 ### Week 1: Setup & Foundation
+
 - [ ] Initialize Next.js 16 project với TypeScript
 - [ ] Setup Supabase project (Singapore region)
 - [ ] Implement Better-Auth với Google OAuth
@@ -1769,6 +1878,7 @@ Settings → Privacy & Data
 - [ ] Configure Tailwind v4 + shadcn/ui
 
 ### Week 2-3: Core Features
+
 - [ ] Build Wishes CRUD (create, list, edit, delete)
 - [ ] Build Secrets CRUD với RLS asymmetric visibility
 - [ ] Implement Scheduled Letters compose + Trigger.dev job
@@ -1776,12 +1886,14 @@ Settings → Privacy & Data
 - [ ] Memories upload với Cloudflare R2
 
 ### Week 4: Viral Hooks Prep
+
 - [ ] Design Wish Card templates (hire designer if needed)
 - [ ] Implement Wish Card generator + PNG export
 - [ ] Build Solo Crush mode onboarding flow
 - [ ] Setup PostHog analytics + funnels
 
 ### Week 5-6: Monetization
+
 - [ ] Integrate PayOS SDK
 - [ ] Build pricing page
 - [ ] Implement Pro feature gates
@@ -1789,6 +1901,7 @@ Settings → Privacy & Data
 - [ ] Email templates (welcome, renewal reminders)
 
 ### Week 7-8: Polish & Launch Prep
+
 - [ ] Vietnamese localization complete
 - [ ] Privacy Policy + Terms (hire legal translator)
 - [ ] Submit DPIA to Vietnam authorities
@@ -1796,6 +1909,7 @@ Settings → Privacy & Data
 - [ ] Beta testing với 20-50 couples (internal + friends)
 
 ### Week 9: MVP Launch
+
 - [ ] Soft launch: TikTok/IG Story teaser campaign
 - [ ] App Store/Play Store listing (PWA Add to Home Screen)
 - [ ] Landing page SEO optimization

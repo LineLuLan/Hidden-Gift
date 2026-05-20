@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LetterList } from "@/components/letters/letter-list";
 import { requireAccount, requireUser } from "@/lib/auth/server";
-import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
+import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 import { listLetters } from "@/lib/letters/queries";
 
 export const metadata: Metadata = { title: "Thư hẹn giờ" };
@@ -43,13 +43,11 @@ export default async function LettersPage() {
     );
   }
 
-  const partner = getPartner(detail, user.id);
-  const partnerName = partner?.display_name ?? "Partner";
   const letters = await listLetters();
 
   return (
     <div className="mx-auto max-w-3xl">
-      <LetterList currentUserId={user.id} partnerName={partnerName} letters={letters} />
+      <LetterList currentUserId={user.id} members={detail.members} letters={letters} />
     </div>
   );
 }

@@ -143,8 +143,8 @@ Không cần. Vercel tự inject env vars vào runtime.
 
 ### ⚠️ Lưu ý
 
-- Sau khi có preview URL: cập nhật `BETTER_AUTH_URL` cho production = URL Vercel.
-- Cập nhật Google OAuth redirect URI với Vercel domain.
+- Sau khi có preview URL: cập nhật `NEXT_PUBLIC_APP_URL` cho production = URL Vercel.
+- Cập nhật Google OAuth redirect URI + Supabase Auth URL Configuration với Vercel domain (`/auth/callback`).
 - Plan: Hobby free đủ dev/staging; Pro $20/mo cho production traffic.
 
 ---

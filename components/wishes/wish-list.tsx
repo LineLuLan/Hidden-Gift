@@ -3,26 +3,47 @@ import { Heart, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { WishCard } from "@/components/wishes/wish-card";
-import { FREE_TIER_WISH_LIMIT, type Wish } from "@/lib/wishes/queries";
+import { WishCard, type ClaimInfo } from "@/components/wishes/wish-card";
+import type { AccountMember } from "@/lib/account/queries";
+import { FREE_TIER_WISH_LIMIT, type Wish, type WishClaimStatus } from "@/lib/wishes/queries";
 
 interface WishListProps {
   wishes: Wish[];
-  displayName?: string;
+  currentUserId: string;
+  members: AccountMember[];
+  /** Free-tier counter (current user's active wishes only). */
+  myActiveCount: number;
+  /** Claim status by wish id (only populated for non-owner wishes). */
+  claimStatusByWishId: Map<string, WishClaimStatus>;
 }
 
-export function WishList({ wishes, displayName }: WishListProps) {
-  const activeCount = wishes.filter((w) => !w.is_fulfilled).length;
-  const canCreate = activeCount < FREE_TIER_WISH_LIMIT;
+export function WishList({
+  wishes,
+  currentUserId,
+  members,
+  myActiveCount,
+  claimStatusByWishId,
+}: WishListProps) {
+  const canCreate = myActiveCount < FREE_TIER_WISH_LIMIT;
+
+  const myWishes = wishes.filter((w) => w.user_id === currentUserId);
+  const otherWishesByOwner = groupBy(
+    wishes.filter((w) => w.user_id !== currentUserId),
+    (w) => w.user_id,
+  );
+
+  const memberById = new Map(members.map((m) => [m.user_id, m] as const));
+  const myDisplayName = memberById.get(currentUserId)?.display_name ?? undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="flex items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Điều ước của bạn</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Điều ước</h1>
           <p className="text-muted-foreground text-sm">
-            Riêng tư hoàn toàn — partner không thấy danh sách này, kể cả khi truy cập trực tiếp
-            database.
+            Cả nhóm thấy chung; nhưng ai âm thầm chuẩn bị thì{" "}
+            <span className="text-foreground font-medium">người được tặng không biết</span> đến lúc
+            mở quà.
           </p>
         </div>
         <Button asChild disabled={!canCreate}>
@@ -38,48 +59,108 @@ export function WishList({ wishes, displayName }: WishListProps) {
       </header>
 
       <p className="text-muted-foreground text-xs">
-        {activeCount}/{FREE_TIER_WISH_LIMIT} điều ước đang chờ (Free tier).
+        {myActiveCount}/{FREE_TIER_WISH_LIMIT} điều ước của bạn đang chờ (Free tier).
         {!canCreate ? " Hoàn thành 1 cái để tạo thêm." : null}
       </p>
 
-      {wishes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <div className="bg-accent text-primary inline-flex h-12 w-12 items-center justify-center rounded-full">
-              <Heart className="h-6 w-6" />
+      <section className="space-y-3">
+        <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          Điều ước của bạn
+        </h2>
+        {myWishes.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <div className="bg-accent text-primary inline-flex h-12 w-12 items-center justify-center rounded-full">
+                <Heart className="h-6 w-6" />
+              </div>
+              <p className="font-medium">Chưa có điều ước nào</p>
+              <p className="text-muted-foreground text-sm">
+                Ghi xuống điều bạn mong nhận — sẽ không ai đoán được ai sẽ chuẩn bị.
+              </p>
+              <Button asChild className="mt-2">
+                <Link href="/wishes/new">
+                  <Plus className="h-4 w-4" />
+                  Tạo điều ước đầu tiên
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {myWishes.map((w) => (
+              <WishCard
+                key={w.id}
+                isOwner={true}
+                displayName={myDisplayName ?? undefined}
+                wish={{
+                  id: w.id,
+                  title: w.title,
+                  description: w.description,
+                  emoji: w.emoji,
+                  is_fulfilled: w.is_fulfilled,
+                  fulfilled_at: w.fulfilled_at,
+                  created_at: w.created_at,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {Array.from(otherWishesByOwner.entries()).map(([ownerId, ownerWishes]) => {
+        const member = memberById.get(ownerId);
+        const ownerName = member?.display_name ?? "Thành viên";
+        return (
+          <section key={ownerId} className="space-y-3">
+            <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              Điều ước của {ownerName}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {ownerWishes.map((w) => {
+                const status = claimStatusByWishId.get(w.id);
+                const myClaim = status?.claims.find((c) => c.preparedBy === currentUserId);
+                const otherClaim = status?.claims.find((c) => c.preparedBy !== currentUserId);
+                const otherClaimer = otherClaim
+                  ? (memberById.get(otherClaim.preparedBy)?.display_name ?? "Ai đó")
+                  : undefined;
+                const claim: ClaimInfo = {
+                  myClaimSecretId: myClaim?.secretId,
+                  otherClaimerName: otherClaimer,
+                  otherClaimedAt: otherClaim?.claimedAt,
+                };
+                return (
+                  <WishCard
+                    key={w.id}
+                    isOwner={false}
+                    displayName={ownerName}
+                    wish={{
+                      id: w.id,
+                      title: w.title,
+                      description: w.description,
+                      emoji: w.emoji,
+                      is_fulfilled: w.is_fulfilled,
+                      fulfilled_at: w.fulfilled_at,
+                      created_at: w.created_at,
+                    }}
+                    claim={claim}
+                  />
+                );
+              })}
             </div>
-            <p className="font-medium">Chưa có điều ước nào</p>
-            <p className="text-muted-foreground text-sm">
-              Ghi xuống điều bạn mong nhận — có thể là quà sinh nhật, một chuyến đi, hoặc đơn giản
-              là một buổi sáng có hoa.
-            </p>
-            <Button asChild className="mt-2">
-              <Link href="/wishes/new">
-                <Plus className="h-4 w-4" />
-                Tạo điều ước đầu tiên
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {wishes.map((wish) => (
-            <WishCard
-              key={wish.id}
-              displayName={displayName}
-              wish={{
-                id: wish.id,
-                title: wish.title,
-                description: wish.description,
-                emoji: wish.emoji,
-                is_fulfilled: wish.is_fulfilled,
-                fulfilled_at: wish.fulfilled_at,
-                created_at: wish.created_at,
-              }}
-            />
-          ))}
-        </div>
-      )}
+          </section>
+        );
+      })}
     </div>
   );
+}
+
+function groupBy<T, K>(items: T[], keyFn: (item: T) => K): Map<K, T[]> {
+  const map = new Map<K, T[]>();
+  for (const item of items) {
+    const key = keyFn(item);
+    const existing = map.get(key);
+    if (existing) existing.push(item);
+    else map.set(key, [item]);
+  }
+  return map;
 }

@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { LetterForm } from "@/components/letters/letter-form";
 import { requireAccount, requireUser } from "@/lib/auth/server";
-import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
+import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
 import { getLetter } from "@/lib/letters/queries";
 
 export const metadata: Metadata = { title: "Sửa thư" };
@@ -26,8 +26,10 @@ export default async function EditLetterPage({ params }: EditLetterPageProps) {
 
   const detail = await getAccountDetail(account.accountId);
   if (!detail || !isPartnerLinked(detail)) redirect("/letters");
-  const partner = getPartner(detail, user.id);
-  if (!partner) redirect("/letters");
+  const recipients = detail.members
+    .filter((m) => m.user_id !== user.id)
+    .map((m) => ({ id: m.user_id, name: m.display_name ?? "Thành viên" }));
+  if (recipients.length === 0) redirect("/letters");
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -44,8 +46,8 @@ export default async function EditLetterPage({ params }: EditLetterPageProps) {
       </header>
       <LetterForm
         mode="edit"
-        recipientId={partner.user_id}
-        recipientName={partner.display_name ?? "Partner"}
+        recipients={recipients}
+        defaultRecipientId={letter.recipient_id}
         defaultValues={{
           id: letter.id,
           subject: letter.subject,

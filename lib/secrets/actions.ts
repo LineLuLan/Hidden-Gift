@@ -124,19 +124,43 @@ export async function markReady(id: string): Promise<SecretActionResult> {
   return { ok: true };
 }
 
-/** Deliver: status → delivered + delivered_at = now. Recipient unlocked. */
+/**
+ * Deliver: status → delivered + delivered_at = now. Recipient unlocked.
+ * Also flips linked wish to fulfilled (idempotent — won't override if already done).
+ */
 export async function markDelivered(id: string): Promise<SecretActionResult> {
   const idParsed = secretIdSchema.safeParse(id);
   if (!idParsed.success) return { ok: false, error: "ID bí mật không hợp lệ" };
 
   await requireUser();
   const supabase = await createClient();
+
+  const { data: secretRow, error: fetchError } = await supabase
+    .from("secrets")
+    .select("linked_wish_id")
+    .eq("id", idParsed.data)
+    .maybeSingle();
+  if (fetchError) return { ok: false, error: fetchError.message };
+
+  const nowIso = new Date().toISOString();
+
   const { error } = await supabase
     .from("secrets")
-    .update({ status: "delivered", delivered_at: new Date().toISOString() })
+    .update({ status: "delivered", delivered_at: nowIso })
     .eq("id", idParsed.data);
 
   if (error) return { ok: false, error: error.message };
+
+  const linkedWishId = (secretRow as { linked_wish_id: string | null } | null)?.linked_wish_id;
+  if (linkedWishId) {
+    await supabase
+      .from("wishes")
+      .update({ is_fulfilled: true, fulfilled_at: nowIso })
+      .eq("id", linkedWishId)
+      .eq("is_fulfilled", false);
+    revalidatePath("/wishes");
+  }
+
   revalidatePath("/secrets");
   return { ok: true };
 }

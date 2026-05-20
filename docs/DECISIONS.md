@@ -137,6 +137,88 @@ Reconsider Better-Auth ở Phase 2+ nếu cần multi-tenancy advanced (couple i
 
 ---
 
+## ADR-003 — Shared wishlist + silent-claim model (pivot khỏi private-diary)
+
+- **Status**: Accepted
+- **Date**: 2026-05-20
+- **Author**: BE Lead (qua user feedback session)
+
+### Context
+
+Phase 1 ship đầu tiên dùng `wishes` table như private diary (RLS `user_id = auth.uid()`):
+
+- Linh tạo wish → chỉ Linh thấy. Dũng không biết Linh muốn gì.
+- `secrets` table dùng cho free-form gift prep (Dũng tự nghĩ ra quà tặng Linh).
+
+User feedback 2026-05-20: model này thiếu use case "couple muốn share wishlist để partner biết mua gì". Trải nghiệm thực tế:
+
+- Partner phải hỏi miệng / đoán → friction cao
+- Squad/family birthday coordination không có cơ chế hỗ trợ
+- Privacy moat ban đầu (Linh không biết Dũng prepare gì) chỉ enforce 1 chiều, không đủ giá trị
+
+So sánh với Amazon Wishlist (đối thủ rõ ràng nhất):
+
+- Amazon: list shareable nhưng KHÔNG ẩn ai đã claim → mất element bất ngờ
+- Hidden Gift (model mới): shareable + ẩn ai claim → giữ surprise = differentiator thật
+
+### Decision
+
+Pivot `wishes` + `secrets` schema sang **shared wishlist + silent claim**:
+
+1. **wishes RLS SELECT**: `is_account_member(account_id)` (mở cho toàn account thay vì user_id only)
+2. **wishes UPDATE/DELETE**: vẫn `user_id = auth.uid()` (chỉ owner edit)
+3. **secrets RLS SELECT**: 3-way asymmetric
+   - Preparer luôn thấy own claim
+   - Non-recipient, non-preparer thành viên thấy active claims (status != 'delivered') → squad coordination
+   - Recipient thấy chỉ khi `status = 'delivered'`
+4. **claimWish action**: tạo `secrets` row với `linked_wish_id` set
+5. **markGifted action**: flip secret → 'delivered' + flip linked wish → `is_fulfilled=true`
+
+Implementation: migration `supabase/migrations/20260520000001_wishlist_redesign.sql`, server actions trong `lib/wishes/actions.ts`, UI variants ở `components/wishes/wish-card.tsx` (owner vs non-owner).
+
+Pre-launch không có dữ liệu thật → migrate tất cả existing wishes sang shared mode, không cần data migration.
+
+### Consequences
+
+**Positive**:
+
+- Khử friction "ngại nói cần gì" cho couple Gen Z
+- Scale tự nhiên cho squad/family (8-12 members) gift coordination
+- Asymmetric moat (owner không thấy claim) vẫn enforce ở DB → moat thật
+- Tăng share viral: wishlist screenshot có caption "đoán xem anh tặng cái nào 🤭"
+- Gen Z fit score: 5-6/10 (private-diary) → 7.6/10 (shared+silent-claim)
+
+**Negative**:
+
+- Materialism vibe risk → cần UX copy nhấn romance, không transactional
+- Squad comparison pressure ("ai có wishlist dài hơn") → ẩn counter cho member khác
+- Breakup → orphan claims; mitigation qua account-delete cron (Phase 4) đã có
+- Multi-claim race condition trên markGifted → dùng optimistic predicate (`WHERE is_fulfilled = FALSE`)
+
+**Mitigation**:
+
+- Onboarding copy "Wish là điều mong, không phải bài test love"
+- Show claim count to non-owner members chỉ first-claim time, không leak ai mới claim sau
+- Realtime publication trên secrets RLS-filtered (Supabase 2024+) → Linh KHÔNG nhận INSERT broadcast của Dũng nếu Dũng prepare bí mật cho Linh
+
+### Follow-ups
+
+- [ ] Update CLAUDE.md §7 (DB schema) với mô tả mới — pending markdown sync (this PR)
+- [ ] Update Hidden_Gift_Brief.md mô tả use case
+- [ ] Add smoke test trên `tests/smoke/wishlist-claim.ts` cho 3-way RLS
+- [ ] Phase 3 Pro: gate "image upload" + "URL preview" + "reveal_at schedule" trên wish cho Pro tier
+- [ ] Phase 3 Pro: Zone Experience Pack (decoration / countdown / shared vault) — ref: project memory `project_zone_experience_pack`
+
+### References
+
+- `supabase/migrations/20260520000001_wishlist_redesign.sql`
+- `lib/wishes/actions.ts` — `claimWish`, `unclaimWish`, `markGifted`
+- `lib/wishes/queries.ts` — `getClaimStatusMap` batch fetch
+- `components/wishes/wish-card.tsx` — owner vs non-owner variants
+- `components/wishes/claim-button.tsx`
+
+---
+
 ## ADR-NNN — Template (copy paste khi tạo ADR mới)
 
 - **Status**: Proposed | Accepted | Deprecated | Superseded by ADR-NNN

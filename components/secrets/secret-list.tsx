@@ -4,24 +4,22 @@ import { Gift, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SecretCard, type SecretCardData } from "@/components/secrets/secret-card";
-import type { Secret } from "@/lib/secrets/queries";
+import type { AccountMember } from "@/lib/account/queries";
+import { groupSecrets, type Secret } from "@/lib/secrets/queries";
 
 interface SecretListProps {
   currentUserId: string;
-  partnerName: string;
+  members: AccountMember[];
   secrets: Secret[];
+  /** True when account has 3+ members (squad/family) — show squad coordination section. */
+  isSquadOrFamily: boolean;
 }
 
-export function SecretList({ currentUserId, partnerName, secrets }: SecretListProps) {
-  const myPreparing = secrets.filter(
-    (s) => s.prepared_by === currentUserId && s.status !== "delivered",
-  );
-  const myDelivered = secrets.filter(
-    (s) => s.prepared_by === currentUserId && s.status === "delivered",
-  );
-  const receivedFromPartner = secrets.filter(
-    (s) => s.prepared_by !== currentUserId && s.status === "delivered",
-  );
+export function SecretList({ currentUserId, members, secrets, isSquadOrFamily }: SecretListProps) {
+  const memberMap = new Map(members.map((m) => [m.user_id, m.display_name ?? "Thành viên"]));
+  const grouped = groupSecrets(secrets, currentUserId);
+
+  const partnerNameOf = (otherUserId: string) => memberMap.get(otherUserId) ?? "Thành viên";
 
   return (
     <div className="space-y-8">
@@ -29,8 +27,7 @@ export function SecretList({ currentUserId, partnerName, secrets }: SecretListPr
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Bí mật</h1>
           <p className="text-muted-foreground text-sm">
-            {partnerName ? `Chuẩn bị quà cho ${partnerName}` : "Chuẩn bị quà cho partner"} — ẩn
-            tuyệt đối đến khi bạn bấm &ldquo;Tặng ngay&rdquo;.
+            Quà bạn đang chuẩn bị — người nhận chỉ thấy sau khi bạn đánh dấu Đã tặng.
           </p>
         </div>
         <Button asChild>
@@ -43,30 +40,61 @@ export function SecretList({ currentUserId, partnerName, secrets }: SecretListPr
 
       <Section
         title="Bạn đang chuẩn bị"
-        emptyHint="Chưa có bí mật nào. Tạo một cái để chuẩn bị cho partner nha."
-        items={myPreparing}
+        emptyHint="Chưa có claim hay bí mật nào. Bạn có thể claim một điều ước từ trang Điều ước, hoặc tạo bí mật tự do."
+        items={grouped.preparing.filter((s) => s.status !== "delivered")}
         render={(s) => (
-          <SecretCard key={s.id} secret={toCardData(s)} isOwner={true} partnerName={partnerName} />
+          <SecretCard
+            key={s.id}
+            secret={toCardData(s)}
+            perspective="preparer"
+            partnerName={partnerNameOf(s.recipient_id)}
+          />
         )}
       />
 
       <Section
-        title={`Bạn đã tặng ${partnerName}`}
-        emptyHint="Chưa tặng bí mật nào."
-        items={myDelivered}
+        title="Bạn đã tặng"
+        emptyHint="Chưa có bí mật nào được tặng."
+        items={grouped.preparing.filter((s) => s.status === "delivered")}
         render={(s) => (
-          <SecretCard key={s.id} secret={toCardData(s)} isOwner={true} partnerName={partnerName} />
+          <SecretCard
+            key={s.id}
+            secret={toCardData(s)}
+            perspective="preparer"
+            partnerName={partnerNameOf(s.recipient_id)}
+          />
         )}
       />
 
       <Section
-        title={`Bạn nhận được từ ${partnerName}`}
-        emptyHint="Chưa có bí mật nào được tặng cho bạn (mà bạn được phép xem)."
-        items={receivedFromPartner}
+        title="Bạn nhận được"
+        emptyHint="Chưa có bí mật nào được tặng cho bạn."
+        items={grouped.received}
         render={(s) => (
-          <SecretCard key={s.id} secret={toCardData(s)} isOwner={false} partnerName={partnerName} />
+          <SecretCard
+            key={s.id}
+            secret={toCardData(s)}
+            perspective="recipient"
+            partnerName={partnerNameOf(s.prepared_by)}
+          />
         )}
       />
+
+      {isSquadOrFamily && grouped.squadActive.length > 0 ? (
+        <Section
+          title="Cả nhóm đang chuẩn bị"
+          emptyHint=""
+          items={grouped.squadActive}
+          render={(s) => (
+            <SecretCard
+              key={s.id}
+              secret={toCardData(s)}
+              perspective="squad"
+              partnerName={partnerNameOf(s.prepared_by)}
+            />
+          )}
+        />
+      ) : null}
     </div>
   );
 }
@@ -81,6 +109,7 @@ function toCardData(s: Secret): SecretCardData {
     delivered_at: s.delivered_at,
     created_at: s.created_at,
     updated_at: s.updated_at,
+    linked_wish_id: s.linked_wish_id,
   };
 }
 
@@ -95,6 +124,7 @@ function Section<T>({
   emptyHint: string;
   render: (item: T) => React.ReactNode;
 }) {
+  if (items.length === 0 && emptyHint === "") return null;
   return (
     <section className="space-y-3">
       <h2 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{title}</h2>

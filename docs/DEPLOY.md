@@ -63,8 +63,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 SUPABASE_PROJECT_REF=...
 SUPABASE_DB_PASSWORD=...
-BETTER_AUTH_SECRET=<rotated, NOT same as dev>
-BETTER_AUTH_URL=https://hiddengift.vn
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 ```
@@ -147,9 +145,13 @@ After first deploy:
 2. `/signup` → tạo tài khoản → email arrives from `hello@hiddengift.vn`
 3. Verify email → redirect into dashboard
 4. Onboarding wizard → pick mode → save
-5. Create wish → smoke OK
-6. Generate invite + accept from second browser
-7. Letter compose → schedule 5 minutes out → Trigger.dev cron delivers + email lands
+5. Create wish → user 1 thấy ngay
+6. Generate invite + accept from second browser → user 2 vào account
+7. User 2 mở `/wishes` → THẤY wish của user 1 + có nút "Tôi sẽ chuẩn bị" (ADR-003)
+8. User 2 claim → user 1 refresh `/wishes` → KHÔNG thấy gì khác (asymmetric moat ✓)
+9. User 2 ở `/secrets` → tab "Bạn đang chuẩn bị" → thấy claim
+10. User 2 bấm "Đánh dấu đã tặng" → user 1 thấy wish chuyển trạng thái fulfilled + biết người tặng
+11. Letter compose → schedule 5 minutes out → Trigger.dev cron delivers + email lands (nếu có Resend + Trigger.dev)
 
 ---
 

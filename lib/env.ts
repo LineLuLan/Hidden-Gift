@@ -24,10 +24,6 @@ const serverSchema = z.object({
   SUPABASE_PROJECT_REF: z.string().min(10, "Supabase project ref missing"),
   SUPABASE_DB_PASSWORD: z.string().min(8, "Supabase DB password missing"),
 
-  // Better-Auth (REQUIRED)
-  BETTER_AUTH_SECRET: z.string().min(32, "Better-Auth secret must be 32+ chars"),
-  BETTER_AUTH_URL: z.string().url("Better-Auth URL must be a valid URL"),
-
   // Google OAuth (optional — login Google disabled if missing)
   GOOGLE_CLIENT_ID: optionalString,
   GOOGLE_CLIENT_SECRET: optionalString,

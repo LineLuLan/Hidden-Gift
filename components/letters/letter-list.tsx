@@ -4,15 +4,21 @@ import { Mail, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LetterCard, type LetterCardData } from "@/components/letters/letter-card";
+import type { AccountMember } from "@/lib/account/queries";
 import { getLetterText, type Letter } from "@/lib/letters/queries";
 
 interface LetterListProps {
   currentUserId: string;
-  partnerName: string;
+  members: AccountMember[];
   letters: Letter[];
 }
 
-export function LetterList({ currentUserId, partnerName, letters }: LetterListProps) {
+export function LetterList({ currentUserId, members, letters }: LetterListProps) {
+  const nameByUserId = new Map(
+    members.map((m) => [m.user_id, m.display_name ?? "Thành viên"] as const),
+  );
+  const getName = (id: string) => nameByUserId.get(id) ?? "Thành viên";
+
   const drafts = letters.filter(
     (l) => l.sender_id === currentUserId && l.is_draft && !l.delivered_at,
   );
@@ -22,13 +28,31 @@ export function LetterList({ currentUserId, partnerName, letters }: LetterListPr
   const sent = letters.filter((l) => l.sender_id === currentUserId && l.delivered_at);
   const received = letters.filter((l) => l.recipient_id === currentUserId && l.delivered_at);
 
+  const renderOwnerCard = (l: Letter) => (
+    <LetterCard
+      key={l.id}
+      letter={toCardData(l)}
+      isOwner={true}
+      otherPartyName={getName(l.recipient_id)}
+    />
+  );
+
+  const renderReceivedCard = (l: Letter) => (
+    <LetterCard
+      key={l.id}
+      letter={toCardData(l)}
+      isOwner={false}
+      otherPartyName={getName(l.sender_id)}
+    />
+  );
+
   return (
     <div className="space-y-8">
       <header className="flex items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight">Thư hẹn giờ</h1>
           <p className="text-muted-foreground text-sm">
-            Viết thư cho {partnerName} giao vào ngày bạn chọn — recipient chỉ thấy sau khi đã giao.
+            Viết thư giao vào ngày bạn chọn — người nhận chỉ thấy sau khi đã giao.
           </p>
         </div>
         <Button asChild>
@@ -40,31 +64,23 @@ export function LetterList({ currentUserId, partnerName, letters }: LetterListPr
       </header>
 
       <Section title="Nháp" emptyHint="Không có thư nháp." items={drafts}>
-        {(l) => (
-          <LetterCard key={l.id} letter={toCardData(l)} isOwner={true} partnerName={partnerName} />
-        )}
+        {renderOwnerCard}
       </Section>
 
       <Section title="Đã lên lịch" emptyHint="Chưa có thư nào được lên lịch." items={scheduled}>
-        {(l) => (
-          <LetterCard key={l.id} letter={toCardData(l)} isOwner={true} partnerName={partnerName} />
-        )}
+        {renderOwnerCard}
       </Section>
 
       <Section title="Đã giao" emptyHint="Chưa giao thư nào." items={sent}>
-        {(l) => (
-          <LetterCard key={l.id} letter={toCardData(l)} isOwner={true} partnerName={partnerName} />
-        )}
+        {renderOwnerCard}
       </Section>
 
       <Section
-        title={`Thư từ ${partnerName}`}
+        title="Thư bạn nhận được"
         emptyHint="Chưa có thư nào được giao tới bạn."
         items={received}
       >
-        {(l) => (
-          <LetterCard key={l.id} letter={toCardData(l)} isOwner={false} partnerName={partnerName} />
-        )}
+        {renderReceivedCard}
       </Section>
     </div>
   );

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createWish, updateWish, type WishActionResult } from "@/lib/wishes/actions";
+import { celebrate } from "@/lib/utils/celebrate";
 
 interface WishFormProps {
   mode: "create" | "edit";
@@ -31,7 +32,12 @@ export function WishForm({ mode, defaultValues }: WishFormProps) {
 
   useEffect(() => {
     if (state?.ok && state.wishId) {
-      toast.success(mode === "create" ? "Đã tạo điều ước" : "Đã cập nhật");
+      if (mode === "create") {
+        celebrate();
+        toast.success("Đã tạo điều ước 💝");
+      } else {
+        toast.success("Đã cập nhật");
+      }
       router.push("/wishes");
       router.refresh();
     }

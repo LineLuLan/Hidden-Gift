@@ -13,8 +13,10 @@ import { saveLetter, type LetterActionResult } from "@/lib/letters/actions";
 
 interface LetterFormProps {
   mode: "create" | "edit";
-  recipientId: string;
-  recipientName: string;
+  /** All eligible recipients (account members excluding the current user). */
+  recipients: { id: string; name: string }[];
+  /** Initially selected recipient id. Defaults to first in list. */
+  defaultRecipientId?: string;
   defaultValues?: {
     id?: string;
     subject?: string;
@@ -33,13 +35,21 @@ function toDatetimeInputValue(iso?: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function LetterForm({ mode, recipientId, recipientName, defaultValues }: LetterFormProps) {
+export function LetterForm({
+  mode,
+  recipients,
+  defaultRecipientId,
+  defaultValues,
+}: LetterFormProps) {
   const router = useRouter();
   const action = saveLetter.bind(null, defaultValues?.id ?? null);
   const [state, formAction, pending] = useActionState<LetterActionResult | null, FormData>(
     action,
     null,
   );
+
+  const firstRecipientId = recipients[0]?.id ?? "";
+  const initialId = defaultRecipientId ?? firstRecipientId;
 
   useEffect(() => {
     if (state?.ok && state.letterId) {
@@ -49,12 +59,35 @@ export function LetterForm({ mode, recipientId, recipientName, defaultValues }: 
     }
   }, [state, mode, router]);
 
+  const showPicker = recipients.length > 1;
+
   return (
     <form action={formAction} className="space-y-5">
-      <input type="hidden" name="recipientId" value={recipientId} />
-      <div className="bg-accent/40 rounded-md border p-3 text-sm">
-        Gửi tới: <span className="font-medium">{recipientName}</span>
-      </div>
+      {showPicker ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="recipientId">Gửi tới</Label>
+          <select
+            id="recipientId"
+            name="recipientId"
+            defaultValue={initialId}
+            required
+            className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+          >
+            {recipients.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <>
+          <input type="hidden" name="recipientId" value={initialId} />
+          <div className="bg-accent/40 rounded-md border p-3 text-sm">
+            Gửi tới: <span className="font-medium">{recipients[0]?.name ?? "Partner"}</span>
+          </div>
+        </>
+      )}
 
       <div className="space-y-1.5">
         <Label htmlFor="subject">Tiêu đề</Label>

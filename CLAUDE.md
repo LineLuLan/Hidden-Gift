@@ -9,25 +9,31 @@
 ## 1. IDENTITY & MISSION
 
 ### Project
+
 **Hidden Gift** — App multi-tenant freemium SaaS cho couple Gen Z Việt Nam.
 
 ### Studio
+
 **100B Studio** — Team 3 người:
+
 - **BE Lead** (project owner, người đang dùng Claude Code này)
 - **Frontend Dev**
 - **Product Manager**
 
 ### Mission (1 câu)
-Giúp couple Gen Z VN ghi điều ước, chuẩn bị quà bí mật, gửi thư hẹn giờ, lưu kỷ niệm — với bí mật được enforce ngay tầng database (Supabase RLS), không chỉ ở UI.
+
+Giúp couple / squad / family Gen Z VN share wishlist, âm thầm chuẩn bị quà, gửi thư hẹn giờ, lưu kỷ niệm — với danh tính người tặng được enforce ẩn ngay tầng database (Supabase RLS) cho đến lúc "đã tặng", không chỉ ở UI.
 
 ### Differentiator
-**Asymmetric visibility** — Partner A KHÔNG THỂ thấy wish/secret đang prepare của Partner B, ngay cả khi inspect database trực tiếp. Đây là tech moat, không phải UI trick.
+
+**Asymmetric claim visibility** (ADR-003, 2026-05-20) — wishlist owner thấy được điều mình mong nhưng KHÔNG biết ai đang chuẩn bị / khi nào sẽ được tặng. Thành viên khác trong nhóm (non-recipient) thấy active claims để tránh trùng quà. Recipient chỉ thấy "đã được tặng" sau khi claimer `markGifted`. Enforce ở RLS database, không phải UI trick → đây là tech moat thật vs Amazon Wishlist (lộ hết claim).
 
 ---
 
 ## 2. CRITICAL CONSTRAINTS (CLAUDE PHẢI TUÂN THỦ)
 
 ### Decisions đã chốt — KHÔNG được tự đổi
+
 1. **KHÔNG có AI integration** trong MVP. Bỏ hẳn Claude Haiku / OpenAI / Gemini. Thay bằng **curated gift ideas tĩnh** trong database (team tự build 200-300 ideas).
 2. **MVP Free 100%** — không paywall trong Phase 1-2. Pro tier launch ở Phase 3 sau khi có traction.
 3. **Pricing**: 29k VND/tháng hoặc 149k VND/năm (FIX, không thay đổi).
@@ -38,6 +44,7 @@ Giúp couple Gen Z VN ghi điều ước, chuẩn bị quà bí mật, gửi th�
 8. **NO emoji trong code** (chỉ trong UI text).
 
 ### Anti-patterns — KHÔNG làm
+
 - KHÔNG dùng `localStorage`/`sessionStorage` cho sensitive data (dùng Supabase + cookies)
 - KHÔNG dùng SQL injection-prone string concatenation (luôn dùng Supabase client params)
 - KHÔNG hardcode secrets vào code (luôn `.env.local`)
@@ -51,6 +58,7 @@ Giúp couple Gen Z VN ghi điều ước, chuẩn bị quà bí mật, gửi th�
 ## 3. TECH STACK & VERSIONS
 
 ### Frontend
+
 ```
 Next.js          16.2.x        App Router, Server Components, Turbopack default
 React            19.2.x        Server Actions, useOptimistic, Compiler enabled
@@ -65,6 +73,7 @@ Tiptap           v2            Rich text editor (letters)
 ```
 
 ### Backend
+
 ```
 Supabase         Latest        PostgreSQL 15 + RLS + Realtime
 Better-Auth      v1.6+         Multi-tenancy, OAuth
@@ -75,6 +84,7 @@ Upstash Redis    Latest        Rate limiting, sessions
 ```
 
 ### Infrastructure
+
 ```
 Vercel           Pro           Hosting, edge functions
 Cloudflare R2    Latest        Media storage ($0 egress)
@@ -84,6 +94,7 @@ Plausible        Starter       Marketing site analytics
 ```
 
 ### Package manager
+
 **pnpm** (không phải npm/yarn) — vì faster, disk-efficient, monorepo-ready.
 
 ---
@@ -169,6 +180,7 @@ hidden-gift/
 Khi Claude code generates UI/copy/feature, **luôn reference persona**:
 
 ### P1 — Linh & Dũng (PRIMARY, 70% weight)
+
 - 21 tuổi, sinh viên Hà Nội, couple 6 tháng
 - Thu nhập 3-7M VND/tháng (sensitive về giá)
 - Xài TikTok 4h/ngày, Instagram 2h/ngày
@@ -177,12 +189,14 @@ Khi Claude code generates UI/copy/feature, **luôn reference persona**:
 - **UX expectation**: load <2s, animation mượt, mobile-first
 
 ### P2 — Hương & Minh (SECONDARY, 20%)
+
 - 24 tuổi, nhân viên văn phòng, couple long-distance 2 năm
 - Thu nhập 10-15M VND/tháng (willing to pay)
 - **Use case**: scheduled letters, countdown to next meet
 - **UX expectation**: reliability > novelty
 
 ### P0 — Minh Single (10%, gateway persona)
+
 - 19 tuổi, sinh viên có crush, chưa tỏ tình
 - **Use case**: Solo Crush Diary mode (private)
 - **Conversion**: 20%+ chuyển sang Couple Zone trong 90 ngày
@@ -196,6 +210,7 @@ Khi Claude code generates UI/copy/feature, **luôn reference persona**:
 ### Phase-by-Phase (KHÔNG theo timeline tuần)
 
 **Phase 0 — Foundation** (must complete trước Phase 1)
+
 - [ ] Project setup (Next.js 16 + TypeScript + Tailwind v4)
 - [ ] Supabase project init (Singapore region)
 - [ ] Better-Auth config với Google OAuth
@@ -205,6 +220,7 @@ Khi Claude code generates UI/copy/feature, **luôn reference persona**:
 - [ ] Vercel deployment pipeline
 
 **Phase 1 — Couple Core** (MVP must-have)
+
 - [ ] Wishes CRUD (user-private, RLS enforce)
 - [ ] Secrets CRUD (asymmetric visibility, RLS critical)
 - [ ] Scheduled Letters compose + Trigger.dev delivery
@@ -212,23 +228,27 @@ Khi Claude code generates UI/copy/feature, **luôn reference persona**:
 - [ ] Memories vault (Cloudflare R2 upload)
 
 **Phase 2 — Viral Hooks** (build trước launch)
+
 - [ ] Wish Card generator (PNG export to share)
 - [ ] Solo Crush mode (single user)
 - [ ] Curated Gift Ideas browser (thay AI)
 - [ ] Onboarding wizard
 
 **Phase 3 — Monetization** (sau launch, có 200+ active couples)
+
 - [ ] PayOS integration
 - [ ] Pro feature gates
 - [ ] Pricing page
 - [ ] Subscription renewal jobs
 
 **Phase 4 — Scale Prep** (sau 5K MAU)
+
 - [ ] Squad mode unlock (feature flag)
 - [ ] Performance optimization
 - [ ] Wrapped recap (deploy tháng 12)
 
 ### Git Workflow
+
 ```bash
 main              # Production (auto-deploy Vercel)
 └── develop       # Staging
@@ -236,12 +256,14 @@ main              # Production (auto-deploy Vercel)
 ```
 
 **Commit convention**: Conventional Commits
+
 - `feat: add wish card export`
 - `fix: rls policy for secrets`
 - `chore: update deps`
 - `docs: update CLAUDE.md`
 
 ### Testing strategy
+
 - **Unit**: Vitest cho utils, business logic
 - **Integration**: Supabase RLS tests (critical — phải pass 100%)
 - **E2E**: Playwright cho critical flows (signup → create wish → invite partner)
@@ -256,17 +278,23 @@ main              # Production (auto-deploy Vercel)
 > Full schema xem Hidden Gift Brief v2 Section 7. Critical points:
 
 ### Multi-tenant root
+
 - `accounts` (couple/squad/family, feature flags built-in)
 - `account_members` (user ↔ account, junction table)
 
-### Core entities với RLS critical
-- `wishes` — RLS: `user_id = auth.uid()` (partner KHÔNG thấy)
-- `secrets` — RLS: `prepared_by = auth.uid()` (recipient KHÔNG thấy)
+### Core entities với RLS critical (sau ADR-003, 2026-05-20)
+
+- `wishes` — RLS SELECT: `is_account_member(account_id)` (toàn nhóm thấy); UPDATE/DELETE: `user_id = auth.uid()` (chỉ owner edit)
+- `secrets` — RLS SELECT 3-way asymmetric:
+  - preparer luôn thấy own claim
+  - non-recipient, non-preparer member thấy active claims (squad coordination)
+  - recipient chỉ thấy khi `status = 'delivered'`
 - `letters` — RLS: sender OR recipient (sau khi sent)
 - `memories` — RLS: tất cả account members
 - `emoji_pings` — RLS: sender OR recipient
 
 ### Performance pattern (CRITICAL)
+
 ```sql
 -- SLOW: auth.uid() evaluated per row
 USING (auth.uid() = user_id)
@@ -276,6 +304,7 @@ USING ((SELECT auth.uid()) = user_id)
 ```
 
 ### Indexes required
+
 - Mọi column dùng trong RLS policies
 - Mọi foreign key
 - `account_id` (tenant isolation)
@@ -286,6 +315,7 @@ USING ((SELECT auth.uid()) = user_id)
 ## 8. CODING STANDARDS
 
 ### TypeScript
+
 - Strict mode bật (`tsconfig.json`)
 - Không `any`, dùng `unknown` nếu cần
 - Type generation từ Supabase: `pnpm supabase gen types typescript`
@@ -296,6 +326,7 @@ USING ((SELECT auth.uid()) = user_id)
   - `kebab-case` cho file names
 
 ### React
+
 - Server Components default, Client Component khi cần interactivity
 - `'use client'` directive ở top file khi cần
 - Server Actions cho mutations (không API routes nếu có thể)
@@ -303,12 +334,14 @@ USING ((SELECT auth.uid()) = user_id)
 - Suspense boundaries cho async data
 
 ### Supabase
+
 - Server client cho server components/actions
 - Browser client CHỈ cho realtime subscriptions
 - Luôn handle errors (không assume success)
 - RLS test bằng `supabase test db` trước mỗi PR
 
 ### Styling
+
 - Tailwind v4 utility-first
 - Custom CSS variables trong `globals.css` cho design tokens
 - Mobile-first (`sm:`, `md:` overrides)
@@ -316,6 +349,7 @@ USING ((SELECT auth.uid()) = user_id)
 - Animation: framer-motion cho complex, CSS cho simple
 
 ### Performance budgets
+
 - LCP < 2.5s on 3G
 - FID < 100ms
 - CLS < 0.1
@@ -327,6 +361,7 @@ USING ((SELECT auth.uid()) = user_id)
 ## 9. SECURITY CHECKLIST
 
 Mọi feature mới phải pass:
+
 - [ ] RLS policy enforced ở database level
 - [ ] Input validation với Zod (server + client)
 - [ ] CSRF protection (built-in Server Actions)
@@ -337,6 +372,7 @@ Mọi feature mới phải pass:
 - [ ] Secrets trong `.env.local`, không commit
 
 ### Vietnam PDPL 2026 compliance
+
 - [ ] Granular consent checkboxes ở signup
 - [ ] User rights portal (export/delete data) trong Settings
 - [ ] Privacy Policy tiếng Việt (hire legal translator trước launch)
@@ -350,6 +386,7 @@ Mọi feature mới phải pass:
 > Lý do bỏ AI: chi phí $50-500/tháng không justified cho feature phụ. Curated data team tự build relevance cao hơn AI generic.
 
 ### Schema
+
 ```sql
 CREATE TABLE public.gift_ideas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -371,12 +408,14 @@ ALTER TABLE public.gift_ideas DISABLE ROW LEVEL SECURITY;
 ```
 
 ### Build plan
+
 - Phase 2: Team build 200 ideas (60% sinh nhật/kỷ niệm, 30% Valentine/lễ, 10% random)
 - Categorize theo persona (student budget vs office worker)
 - UI filter: occasion + budget + persona
 - Sort: popularity (track click-through)
 
 ### Future upgrade path
+
 - 5K MAU → reconsider Gemini Flash gated cho Pro tier
 - 10K MAU → custom recommendations dựa trên wish history (rule-based, không AI)
 
@@ -385,6 +424,7 @@ ALTER TABLE public.gift_ideas DISABLE ROW LEVEL SECURITY;
 ## 11. VIRAL HOOKS SPEC
 
 ### Wish Card Shareable
+
 - **Input**: Wish object (title, description, image)
 - **Output**: PNG 1080×1920 (IG Story size)
 - **Templates**: 5-7 designs (Dreamy Clouds, Starry Night, Floral Minimal, Neon Pop, Film Grain)
@@ -393,6 +433,7 @@ ALTER TABLE public.gift_ideas DISABLE ROW LEVEL SECURITY;
 - **Share**: Web Share API native, fallback copy to clipboard
 
 ### Wrapped Recap (Phase 4, deploy tháng 12)
+
 - **Trigger**: Trigger.dev job chạy 1/12 hàng năm
 - **Stats**: wishes count, gifts count, letters count, memories count, top badges
 - **Format Free**: 10 static slides (screenshot share)
@@ -400,6 +441,7 @@ ALTER TABLE public.gift_ideas DISABLE ROW LEVEL SECURITY;
 - **Hashtag**: #HiddenGiftWrapped2026
 
 ### Solo Crush Mode
+
 - **Onboarding split**: "Single" vs "In a relationship"
 - **Solo features**: Crush Vault (private notes), countdown, imaginary wish list
 - **Conversion CTA**: "Tỏ tình thành công? Mời crush join!" sau 30 ngày
@@ -446,17 +488,20 @@ pnpm dlx shadcn@latest add button # Add component
 ### Khi tôi (user) ask Claude Code làm gì, Claude phải:
 
 **1. Đọc context file này trước**
+
 - Hiểu project state hiện tại
 - Check phase đang ở đâu
 - Verify decision đã chốt (xem Section 2)
 
 **2. Tuân thủ tech stack — KHÔNG đề xuất alternative**
+
 - User chọn Next.js 16, KHÔNG suggest Remix/Astro
 - User chọn Supabase, KHÔNG suggest Firebase/PocketBase
 - User chọn PayOS, KHÔNG suggest Stripe (cho MVP)
 - User bỏ AI, KHÔNG suggest add lại
 
 **3. Code generation priorities**
+
 - Type safety first (no `any`)
 - RLS-aware (mọi table query phải pass auth check)
 - Mobile-first (Linh dùng iPhone 13)
@@ -464,29 +509,30 @@ pnpm dlx shadcn@latest add button # Add component
 - Performance budget aware
 
 **4. Khi không chắc, hỏi clarification**
+
 - KHÔNG assume requirements không rõ
 - Ask trước khi generate code lớn (>100 lines)
 - Show plan trước, code sau (cho file lớn)
 
 **5. Reference brief khi cần**
+
 - Hidden Gift Brief v2 là source of truth
 - File này (`CLAUDE.md`) là quick reference
 - Conflict → hỏi BE Lead (user)
 
 ### Comment style
+
 ```typescript
 // Good: explain WHY, not WHAT
 // RLS đảm bảo partner không thấy secret này; auth.uid() wrap trong SELECT để cache
-const { data } = await supabase
-  .from('secrets')
-  .select('*')
-  .eq('prepared_by', user.id);
+const { data } = await supabase.from("secrets").select("*").eq("prepared_by", user.id);
 
 // Bad: redundant
 // Select secrets where prepared_by equals user id
 ```
 
 ### File header template
+
 ```typescript
 /**
  * @file wishes/actions.ts
@@ -501,24 +547,28 @@ const { data } = await supabase
 ## 14. DEBUGGING GUIDE
 
 ### "RLS policy violation" error
+
 1. Check `auth.uid()` có trả null không (user chưa login)
 2. Test policy bằng `SET request.jwt.claims = '{"sub": "user-uuid"}';`
 3. Verify policy expression đúng (USING vs WITH CHECK)
 4. Check index có cover query không
 
 ### Supabase Realtime không nhận event
+
 1. Check Realtime enabled trên table (`ALTER PUBLICATION supabase_realtime ADD TABLE...`)
 2. Check channel name match
 3. Check filter match (RLS apply cho Realtime too)
 4. Browser DevTools → Network → WS connection alive
 
 ### Trigger.dev job không chạy
+
 1. Check Trigger.dev dashboard có nhận event không
 2. Verify cron expression đúng timezone (Asia/Ho_Chi_Minh)
 3. Check API key trong `.env.local`
 4. Local: `pnpm trigger:dev` đang chạy không
 
 ### PayOS webhook không verify
+
 1. Check `x-payos-signature` header
 2. Verify checksum key đúng
 3. Check raw body (không JSON.parse trước verify)
@@ -529,26 +579,31 @@ const { data } = await supabase
 ## 15. METRICS & KPIs
 
 ### North Star Metric
+
 **Weekly Active Couples** (WAC) — đo cả 2 partner đều active trong tuần.
 
 ### Phase metrics
 
 **Phase 1 (post-launch)**:
+
 - 100 signups
 - 30% finish onboarding (link partner)
 - 50% retention day 7
 
 **Phase 2**:
+
 - 1K MAU
 - 10%+ users share Wish Card
 - 20%+ Solo users convert to Couple
 
 **Phase 3 (post-Pro launch)**:
+
 - 5K MAU
 - 2-4% Free → Pro conversion
 - Churn < 5%/month
 
 ### Funnel critical
+
 ```
 Signup → Verify Email → Onboarding → Link Partner → First Wish → First Letter → Pro Trial → Pro Paid
 ```
@@ -560,6 +615,7 @@ Track mọi step trong PostHog. Drop-off >40% bất kỳ step = bug.
 ## 16. EMERGENCY CONTACTS / KNOWLEDGE
 
 ### Khi Claude Code stuck
+
 1. Check official docs:
    - Next.js 16: https://nextjs.org/docs
    - Supabase: https://supabase.com/docs
@@ -570,6 +626,7 @@ Track mọi step trong PostHog. Drop-off >40% bất kỳ step = bug.
 3. Ask BE Lead (user) cho business logic decisions
 
 ### Critical files Claude phải biết
+
 - `CLAUDE.md` — this file (project context)
 - `Hidden-Gift-Brief.md` — full spec
 - `supabase/migrations/` — schema source of truth
@@ -580,9 +637,9 @@ Track mọi step trong PostHog. Drop-off >40% bất kỳ step = bug.
 
 ## 17. CHANGELOG
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-05-18 | 1.0 | Initial blueprint based on Brief v2 |
+| Date       | Version | Changes                             |
+| ---------- | ------- | ----------------------------------- |
+| 2026-05-18 | 1.0     | Initial blueprint based on Brief v2 |
 
 ---
 

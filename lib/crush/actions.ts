@@ -135,11 +135,14 @@ export async function deleteDiaryEntry(id: string): Promise<CrushActionResult> {
   return { ok: true };
 }
 
-/** Mark caller's account as onboarded — middleware stops nudging to /onboarding. */
+/**
+ * Mark caller's account as onboarded — middleware stops nudging to /onboarding.
+ * Also seeds 3 sample wishes if the user has none yet (Free activation boost).
+ */
 export async function markOnboarded(
   preferredKind: "solo" | "couple" = "couple",
 ): Promise<CrushActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const account = await requireAccount();
   const supabase = await createClient();
   const { error } = await supabase
@@ -150,6 +153,39 @@ export async function markOnboarded(
     })
     .eq("id", account.accountId);
   if (error) return { ok: false, error: error.message };
+
+  // Seed 3 sample wishes if user has none. Skip silently on failure — not critical.
+  const { count } = await supabase
+    .from("wishes")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+  if ((count ?? 0) === 0) {
+    const samples = [
+      {
+        account_id: account.accountId,
+        user_id: user.id,
+        title: "Một buổi sáng có hoa",
+        emoji: "🌷",
+        description: "Cảm giác được tặng hoa bất ngờ buổi sáng — kiểu rất nhẹ và rất đẹp.",
+      },
+      {
+        account_id: account.accountId,
+        user_id: user.id,
+        title: "Bữa tối yên tĩnh ở Hồ Tây",
+        emoji: "🍣",
+        description: "Một nhà hàng nhỏ, view hồ, không quá ồn — chỉ tụi mình.",
+      },
+      {
+        account_id: account.accountId,
+        user_id: user.id,
+        title: "Một quyển sách đang muốn đọc",
+        emoji: "📚",
+        description: "Có thể là Atomic Habits, hoặc bất kỳ cuốn nào bạn nghĩ mình sẽ thích.",
+      },
+    ];
+    await supabase.from("wishes").insert(samples);
+  }
+
   revalidatePath("/", "layout");
   return { ok: true };
 }

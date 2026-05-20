@@ -8,6 +8,7 @@ import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { DataControls } from "@/components/profile/data-controls";
 import { ModeSwitcher } from "@/components/profile/mode-switcher";
 import { EmailPrefsCard } from "@/components/profile/email-prefs";
+import { TutorialToggle } from "@/components/settings/tutorial-toggle";
 import { DEFAULT_PREFS, type EmailPrefs } from "@/lib/preferences/schema";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
@@ -136,6 +137,19 @@ export default async function SettingsPage() {
       />
 
       <EmailPrefsCard current={emailPrefs} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Hướng dẫn sử dụng</CardTitle>
+          <CardDescription>
+            Chạy lại tour ngắn để xem các tính năng. Bấm vào sẽ quay về Trang chủ + tour mở lại tự
+            động.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TutorialToggle />
+        </CardContent>
+      </Card>
 
       <DataControls deletionRequestedAt={deletionRequestedAt} />
     </div>

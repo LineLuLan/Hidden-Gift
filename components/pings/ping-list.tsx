@@ -8,15 +8,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
 import { formatRelative } from "@/lib/utils/format";
 import { markAllPingsRead } from "@/lib/pings/actions";
+import type { AccountMember } from "@/lib/account/queries";
 import type { EmojiPing } from "@/lib/pings/queries";
 
 interface PingListProps {
   pings: EmojiPing[];
   currentUserId: string;
-  partnerName: string;
+  members: AccountMember[];
 }
 
-export function PingList({ pings, currentUserId, partnerName }: PingListProps) {
+export function PingList({ pings, currentUserId, members }: PingListProps) {
+  const nameByUserId = new Map(
+    members.map((m) => [m.user_id, m.display_name ?? "Thành viên"] as const),
+  );
+  const getName = (id: string) => nameByUserId.get(id) ?? "Thành viên";
   const [pending, startTransition] = useTransition();
   const unreadCount = pings.filter(
     (p) => p.recipient_id === currentUserId && p.read_at === null,
@@ -66,7 +71,9 @@ export function PingList({ pings, currentUserId, partnerName }: PingListProps) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2">
                       <p className="text-sm font-medium">
-                        {fromMe ? `Bạn → ${partnerName}` : `${partnerName} → Bạn`}
+                        {fromMe
+                          ? `Bạn → ${getName(ping.recipient_id)}`
+                          : `${getName(ping.sender_id)} → Bạn`}
                       </p>
                       {unread ? (
                         <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-[10px]">

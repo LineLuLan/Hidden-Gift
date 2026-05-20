@@ -11,6 +11,7 @@ import { requireAccount, requireUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAccountDetail, getPartner, isPartnerLinked } from "@/lib/account/queries";
 import { pingIdSchema, pingInputSchema } from "@/lib/pings/schema";
+import { z } from "zod";
 
 export interface PingActionResult {
   ok: boolean;
@@ -27,15 +28,35 @@ export async function sendPing(formData: FormData): Promise<PingActionResult> {
   if (!parsed.success) {
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors };
   }
+  const recipientFromForm = formData.get("recipientId");
+  const recipientParsed = z
+    .string()
+    .uuid()
+    .optional()
+    .safeParse(
+      typeof recipientFromForm === "string" && recipientFromForm.length > 0
+        ? recipientFromForm
+        : undefined,
+    );
 
   const user = await requireUser();
   const account = await requireAccount();
   const detail = await getAccountDetail(account.accountId);
   if (!detail || !isPartnerLinked(detail)) {
-    return { ok: false, error: "Cần partner trước khi gửi ping" };
+    return { ok: false, error: "Cần ít nhất 1 người khác để gửi ping" };
   }
-  const partner = getPartner(detail, user.id);
-  if (!partner) return { ok: false, error: "Không tìm thấy partner" };
+
+  // Resolve recipient: explicit form value (squad/family) OR fallback partner (couple)
+  let recipientId: string | null = recipientParsed.success ? (recipientParsed.data ?? null) : null;
+  if (recipientId) {
+    const valid = detail.members.some((m) => m.user_id === recipientId && m.user_id !== user.id);
+    if (!valid) recipientId = null;
+  }
+  if (!recipientId) {
+    const partner = getPartner(detail, user.id);
+    if (!partner) return { ok: false, error: "Không tìm thấy người nhận" };
+    recipientId = partner.user_id;
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -43,7 +64,7 @@ export async function sendPing(formData: FormData): Promise<PingActionResult> {
     .insert({
       account_id: account.accountId,
       sender_id: user.id,
-      recipient_id: partner.user_id,
+      recipient_id: recipientId,
       emoji: parsed.data.emoji,
       message: parsed.data.message ?? null,
     })
