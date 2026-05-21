@@ -1,9 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// TODO Phase 0: wire Better-Auth session check + tenant context.
-// For now passthrough so dev server runs without auth blocking.
-export function proxy(_request: NextRequest) {
-  return NextResponse.next();
+import { updateSession } from "@/lib/supabase/middleware";
+
+// Marketing routes anyone (auth or not) can visit.
+const MARKETING_PATHS = new Set(["/welcome", "/about"]);
+
+export async function proxy(request: NextRequest) {
+  const { response, user } = await updateSession(request);
+  const { pathname } = request.nextUrl;
+
+  // Unauthenticated visitors hitting `/` get the marketing landing, not /login.
+  if (!user && pathname === "/") {
+    return NextResponse.redirect(new URL("/welcome", request.url));
+  }
+
+  // Authenticated users on marketing landing → home dashboard.
+  if (user && MARKETING_PATHS.has(pathname)) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  return response;
 }
 
 export const config = {

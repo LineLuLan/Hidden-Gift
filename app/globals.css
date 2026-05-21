@@ -1,13 +1,41 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/*
+ * Dark mode strategy: class-based via `.dark` on <html>, plus a media-query
+ * fallback for users who haven't picked a mode (i.e. ThemeToggle is in
+ * "system" — no class on <html>).
+ *
+ * ThemeToggle component sets `data-theme="dark|light|system"` on <html> AND
+ * applies `.dark` when resolved theme is dark. SSR boot script in
+ * app/layout.tsx hydrates the class before React mounts (no FOUC).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* Surfaces */
   --color-background: oklch(99% 0 0);
   --color-foreground: oklch(15% 0 0);
-  --color-muted: oklch(96% 0 0);
-  --color-muted-foreground: oklch(50% 0 0);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(15% 0 0);
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(15% 0 0);
+
+  /* Brand — soft rose for Gen Z couple aesthetic */
   --color-primary: oklch(60% 0.18 350);
   --color-primary-foreground: oklch(99% 0 0);
+  --color-secondary: oklch(96% 0.02 350);
+  --color-secondary-foreground: oklch(22% 0 0);
+  --color-accent: oklch(94% 0.04 350);
+  --color-accent-foreground: oklch(22% 0 0);
+  --color-destructive: oklch(60% 0.22 27);
+  --color-destructive-foreground: oklch(99% 0 0);
+
+  /* Neutrals */
+  --color-muted: oklch(96% 0 0);
+  --color-muted-foreground: oklch(50% 0 0);
   --color-border: oklch(90% 0 0);
+  --color-input: oklch(90% 0 0);
   --color-ring: oklch(60% 0.18 350);
 
   --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
@@ -18,19 +46,60 @@
   --radius-xl: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: oklch(10% 0 0);
-    --color-foreground: oklch(96% 0 0);
-    --color-muted: oklch(18% 0 0);
-    --color-muted-foreground: oklch(65% 0 0);
-    --color-primary: oklch(70% 0.18 350);
-    --color-border: oklch(22% 0 0);
-  }
+/* Dark overrides — applied when html.dark OR (no class set AND OS dark) */
+.dark {
+  --color-background: oklch(10% 0 0);
+  --color-foreground: oklch(96% 0 0);
+  --color-card: oklch(14% 0 0);
+  --color-card-foreground: oklch(96% 0 0);
+  --color-popover: oklch(14% 0 0);
+  --color-popover-foreground: oklch(96% 0 0);
+
+  --color-primary: oklch(70% 0.18 350);
+  --color-primary-foreground: oklch(15% 0 0);
+  --color-secondary: oklch(22% 0.02 350);
+  --color-secondary-foreground: oklch(96% 0 0);
+  --color-accent: oklch(25% 0.04 350);
+  --color-accent-foreground: oklch(96% 0 0);
+  --color-destructive: oklch(55% 0.22 27);
+  --color-destructive-foreground: oklch(99% 0 0);
+
+  --color-muted: oklch(18% 0 0);
+  --color-muted-foreground: oklch(65% 0 0);
+  --color-border: oklch(22% 0 0);
+  --color-input: oklch(22% 0 0);
+  --color-ring: oklch(70% 0.18 350);
 }
 
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Floating wish bubble animation — used by FloatingWishesHero. */
+@keyframes hg-float {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(-1deg);
+  }
+  33% {
+    transform: translateY(-8px) translateX(4px) rotate(0.5deg);
+  }
+  66% {
+    transform: translateY(4px) translateX(-4px) rotate(1.2deg);
+  }
+}
+
+.hg-wish-bubble {
+  animation-name: hg-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hg-wish-bubble {
+    animation: none;
+  }
 }
