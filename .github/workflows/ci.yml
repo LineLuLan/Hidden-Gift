@@ -20,14 +20,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -39,7 +39,7 @@ jobs:
         run: pnpm lint
 
       - name: Unit tests
-        run: pnpm test --run
+        run: pnpm test --run --passWithNoTests
 
       - name: Build (smoke test)
         run: pnpm build

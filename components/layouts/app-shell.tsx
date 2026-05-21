@@ -13,6 +13,7 @@ import {
   Settings,
   Sparkles,
   Flower2,
+  Calendar,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
@@ -30,6 +31,7 @@ const COUPLE_NAV: NavItem[] = [
   { href: "/wishes", label: "Điều ước", icon: Heart },
   { href: "/secrets", label: "Bí mật", icon: Gift },
   { href: "/letters", label: "Thư hẹn giờ", icon: Mail },
+  { href: "/countdowns", label: "Lịch", icon: Calendar },
   { href: "/memories", label: "Kỷ niệm", icon: Image },
   { href: "/pings", label: "Ping", icon: Bell },
   { href: "/gift-ideas", label: "Gợi ý quà", icon: Sparkles },
@@ -39,6 +41,7 @@ const SOLO_NAV: NavItem[] = [
   { href: "/", label: "Trang chủ", icon: Home },
   { href: "/crush", label: "Crush", icon: Flower2 },
   { href: "/wishes", label: "Điều ước", icon: Heart },
+  { href: "/countdowns", label: "Lịch", icon: Calendar },
   { href: "/memories", label: "Kỷ niệm", icon: Image },
   { href: "/gift-ideas", label: "Gợi ý quà", icon: Sparkles },
 ];

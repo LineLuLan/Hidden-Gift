@@ -1,17 +1,19 @@
-# Session Handoff — Hidden Gift Phase 0→4 build sprint
+# Session Handoff — Hidden Gift Phase 0→4 + Phase 1.5 + Phase 2 sprint
 
 > Comprehensive handoff after marathon build session. Read this before touching anything to know the state. Pairs with `PHASE-1-STATUS.md` (legacy snapshot) and `DEPLOY.md` (production checklist).
 
-**Date**: 2026-05-20
+**Date**: 2026-05-20 (Phase 2 update)
 **Author**: BE Lead (via Claude Opus 4.7)
-**Branch HEAD**: `99c6de5` on `be` / `fe` / `dev` (all in sync)
-**Total commits**: 77 since scaffold
+**Branch HEAD**: `a3d5b08` on `be` / `fe` / `dev` (synced); +1 uncommitted commit on `fe` for countdowns/subscription/dashboard redesign
+**Total commits**: 78 since scaffold (1 pending)
 
 ---
 
 ## TL;DR
 
-Code from Phase 0 (scaffold) through Phase 4 (scale prep + compliance) is **complete**. App boots clean, 32 routes compile, 17 migrations applied to remote Supabase. App is live-able **right now** on Free tier (Supabase + Google OAuth + Supabase Storage + console-log emails + manual letter deliver). Plugging in 7 service keys (Sentry / PostHog / Upstash / Resend / Trigger.dev / R2 / PayOS) flips integrations from no-op → active without code changes.
+Code from Phase 0 (scaffold) → Phase 4 (scale prep) → **Phase 1.5 (wishlist redesign ADR-003)** → **Phase 2 (tutorial + subscription scaffold + countdowns + dashboard redesign)** is **complete**. App boots clean, **36 routes compile**, **21 migrations** (17 applied to remote dev Supabase + 4 new Phase 2 migrations applied manually by BE Lead 2026-05-20). App is live-able **right now** on Free tier (Supabase + Google OAuth + Supabase Storage + console-log emails + manual letter deliver). Plugging in 7 service keys (Sentry / PostHog / Upstash / Resend / Trigger.dev / R2 / PayOS) flips integrations from no-op → active without code changes.
+
+Currently uncommitted on `fe`: countdown CRUD, `/settings/subscription` Pro pricing page, floating-wishes dashboard hero, Pro upsell banner. ~13 files. Apply migrations 018-021 first, then test local, then commit + push + sync dev/be.
 
 ---
 
@@ -45,6 +47,55 @@ Code from Phase 0 (scaffold) through Phase 4 (scale prep + compliance) is **comp
 - **UI variants**: owner card (edit/delete/share) vs non-owner card (claim button + "X đã chọn món này" badge for squad coordination, no leak to wisher)
 - **Side-effect**: `markGifted`/`markDelivered` on a linked secret atomically flips the wish to `is_fulfilled` (optimistic predicate avoids race between squad members)
 - **Free-form secrets** still supported (linked_wish_id null) — surprise gifts outside the wishlist
+
+### Phase 2 — Tutorial + Pro scaffold + Zone audit + Countdowns + Dashboard redesign (2026-05-20)
+
+**A. Tutorial system** (react-joyride v2.9.3)
+
+- **Migration 019** `20260520000002_tutorial.sql` — `account_members.tutorial_completed_at TIMESTAMPTZ`
+- Auto-trigger on `/` route after onboarding, dampened via localStorage `hg_tutorial_dismissed_<userId>`
+- 8-step Vietnamese tour pointing to dashboard `data-tutorial` selectors (hero, feature cards, invite card)
+- Settings → "Bật lại hướng dẫn" toggle → server action `restartTutorial()` sets back to NULL → next `/` visit re-runs
+- Per-membership tracking (works for squad-join re-tour later)
+- Files: `lib/tutorial/{queries,actions}.ts`, `components/tutorial/{tour,tour-mount}.tsx`, `components/settings/tutorial-toggle.tsx`
+
+**B. Subscription scaffolding** (PayOS wire DEFERRED to Phase 3)
+
+- **Migration 020** `20260520000003_subscriptions.sql` — per-user table with RLS select-own (writes via service_role only when PayOS webhook lands)
+- `lib/subscription/get.ts` — `getSubscription`, `isPro` helpers (returns Free default if no row)
+- `lib/subscription/limits.ts` — central `FREE_LIMITS` / `PRO_LIMITS` map (ownedZones, wishes, letters, memories, countdowns, bucket, notes, vault, templates). Pro uses 999_999 as effective unlimited
+- `lib/wishes/actions.ts:createWish` wired through `getLimits()` (no behavior change for Free — still 5-cap)
+- `/settings/subscription` page (new route): current plan badge + 2 pricing cards (29k/month, 149k/year w/ "Tiết kiệm 57%" badge) + 15-row feature comparison table + 4-question FAQ + disabled "Sắp có" PayOS buttons
+- Settings page now has "Subscription" entry card with PRO/FREE badge → links to `/settings/subscription`
+
+**C. Zone audit fixes** (squad/family >2 members)
+
+- `letters` composer + list: recipient `<select>` dropdown when `members.length > 1`; pages pass `members` list instead of single partner
+- `pings` composer + list: same dropdown pattern; `sendPing` action accepts `recipientId` from form (falls back to `getPartner()` for couple compat)
+- Per-letter / per-ping name derivation via `Map<user_id, display_name>`
+- Gatekeeper copy generic ("Cần ít nhất 2 người")
+
+**D. Free activation boosts**
+
+- `markOnboarded` seeds 3 sample wishes (hoa, café Hồ Tây, sách) if user has zero — editable/deletable
+- Confetti burst (`lib/utils/celebrate.ts` lazy-loading `canvas-confetti`) on every successful wish create
+- Pastel color palette `#ec4899 #f472b6 #fbcfe8 #fff #fde68a`
+
+**E. Countdowns / Lịch kỷ niệm** (new feature)
+
+- **Migration 021** `20260520000004_countdowns.sql` — `countdowns(id, account_id, created_by, title, target_date DATE, is_recurring, emoji, note)` + RLS account-member SELECT + creator-only UPDATE/DELETE + index `(account_id, target_date)`
+- Pure display helper `lib/countdowns/view.ts:computeCountdownView` split from server queries to be safe in client components (avoid server-only leak)
+- 3 display states: upcoming ("Còn X ngày") · today ("Hôm nay là ngày này 💝") · past (count-up "Đã X ngày" for past+non-recurring; recurring auto-rolls to next year)
+- Routes: `/countdowns`, `/countdowns/new`, `/countdowns/[id]/edit` (3 new routes)
+- Components: `countdown-card`, `countdown-form`, `countdown-list`, `countdown-widget` (dashboard slot)
+- Free tier cap: 1 countdown per user (via `LIMITS.countdowns`)
+- Nav addition: sidebar + mobile bottom (Calendar icon "Lịch")
+
+**F. Dashboard redesign** (`app/(app)/page.tsx`)
+
+- **Replaced** plain card grid → polished home: floating-wishes hero (gradient pink/rose + 8 wish bubbles drifting with CSS `@keyframes hg-float`, respects `prefers-reduced-motion`) → 3 stat chips (wishes pending / countdowns / current plan) → invite or solo banner → nearest countdown widget → feature tiles section with hover lift + gradient icon backgrounds → Pro upsell banner at bottom (gradient primary/accent, hidden for Pro users)
+- New component: `components/home/floating-wishes-hero.tsx` (server-renderable, deterministic positions)
+- `app/globals.css` keyframe `hg-float` + `.hg-wish-bubble` class
 
 ### Phase 2 — Viral hooks (5 features)
 
@@ -196,7 +247,12 @@ Each integration uses the **graceful skip pattern**: `features.<service>` boolea
 016 affiliate_links            — gift_ideas.affiliate_url/partner/click_count + increment RPC
 017 email_preferences          — account_members.email_prefs JSONB
 018 wishlist_redesign          — ADR-003: wishes shared to account; secrets 3-way asymmetric; idx_wishes_account_active
+019 tutorial                   — account_members.tutorial_completed_at TIMESTAMPTZ
+020 subscriptions              — per-user subscription table + RLS select-own
+021 countdowns                 — anniversary tracker with recurring + RLS account-member + creator-edit
 ```
+
+All 21 applied to remote dev Supabase `ylssxjbmiwxpcpbemftm` (017 via CI, 018-021 via Dashboard SQL Editor by BE Lead 2026-05-20).
 
 ---
 
@@ -232,23 +288,60 @@ Total: ~1 day of registration + DNS waits, ~30 min of actual deploy work.
 - **Sentry sampled errors** — manually throw test errors per route to verify capture
 - **Bundle size budget** — fail CI if route initial JS > 200KB
 
+### If goal = integrate Hidden Gift with Zuno (DEFERRED, planned)
+
+User has another Next.js + Supabase app called **Zuno**. Intent: Hidden Gift exists as standalone app AND as a feature inside Zuno. Combined subscription. Minimal code touch each side.
+
+**Planned architecture** (per plan file `~/.claude/plans/kill-h-t-l-ng-token-shiny-blum.md` v3):
+
+1. **Same Supabase project** — both apps point to same `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Session shared via Supabase JWT cookie.
+2. **Subdomain federation** — Zuno at `zuno.com`, Hidden Gift at `gift.zuno.com`. Both apps configure `@supabase/ssr` `cookieOptions: { domain: ".zuno.com" }` so cookie is shared. Vercel adds custom domain to Hidden Gift project.
+3. **Shared design tokens** — extract `tailwind.config.ts` + shadcn primitives into private npm package `@zuno/design-tokens`; both apps consume.
+4. **Combined subscription** — already prepped: `subscriptions(user_id, plan, expires_at)` table is user-keyed not account-keyed. Both apps read same row. PayOS webhook updates once → both apps see Pro.
+5. **Cross-link nav** — Zuno nav item "Hidden Gift" + Hidden Gift footer "Quay về Zuno". Next.js `prefetch` + DNS-prefetch hint for sub-300ms perceived transition.
+
+**To assess when Zuno is pulled locally, I need to read:**
+
+- `package.json` (Next.js version compat? React 19?)
+- `tailwind.config.ts` / `globals.css` (design tokens diff vs Hidden Gift)
+- Supabase setup: `lib/supabase/*.ts` or equivalent (cookie config, project URL)
+- Auth flow: `app/auth/callback`, `middleware.ts`, login/signup routes (to confirm Supabase Auth too vs other provider)
+- Schema: `supabase/migrations/` (table name conflicts? `accounts`, `account_members`, etc.)
+- Deploy: `vercel.json`, root domain config
+
+**Open questions for the user to answer when Zuno repo arrives:**
+
+- What does Zuno DO? (other-half of product story, helps decide which features overlap)
+- Is Zuno already deployed, has users, has its own Supabase data? (if yes — Hidden Gift migrates INTO Zuno's Supabase; if no — pick whichever)
+- Brand: keep both names (Hidden Gift + Zuno = product family) or merge under one brand?
+
+**Why deferred**: user wanted to ship Hidden Gift core first (Phase 1.5 + Phase 2 priorities). Zuno integration revisited "when Zuno is brought local for inspection".
+
 ---
 
 ## Daily handoff post (for Slack/Discord)
 
 ```
-# Handoff — 2026-05-20 — BE Lead (via AI build sprint)
+# Handoff — 2026-05-20 (Phase 2 update) — BE Lead (via AI build sprint)
 
 ## Done this session
-- Full Phase 0 → 4 build: 28+ features, 17 migrations, 32 routes, 77 commits
-- All branches (be/fe/dev) synced @ 99c6de5; main untouched
-- Read docs/SESSION-HANDOFF.md for full state
+- Phase 0 → 4 + Phase 1.5 (wishlist redesign ADR-003) + Phase 2:
+  - Tutorial system (react-joyride 8 steps + Settings toggle)
+  - Subscription scaffold (DB table + helpers + /settings/subscription pricing page; PayOS wire deferred)
+  - Zone audit fixes (squad/family letter+ping recipient pickers)
+  - Free activation (3 sample wishes + confetti on first wish)
+  - Countdown / Lịch kỷ niệm feature (CRUD + widget + nav)
+  - Dashboard redesign (floating wishes hero + stats + Pro upsell)
+- 36 routes total, 21 migrations (4 new: 018-021)
+- 1 commit pending push for countdown + subscription + dashboard redesign
+- See docs/SESSION-HANDOFF.md for full state; ADR-003 in docs/DECISIONS.md
 
 ## Doing next
-- [BE Lead] Production Supabase project + apply migrations
-- [BE Lead] Vercel link + production env vars
-- [FE Dev] Visual QA on iPhone 13 (memory upload HEIC flow)
-- [PM] PayOS business KYC kickoff
+- [BE Lead] Commit pending changes; sync dev/be branches
+- [BE Lead] Visual QA on dashboard floating-wishes hero (mobile + iPhone Safari)
+- [BE Lead] Bring Zuno repo locally for integration assessment
+- [FE Dev] Visual QA tutorial flow + Pro page on iPhone 13
+- [PM] PayOS business KYC kickoff (still pending)
 
 ## Blockers
 - None (code is complete)

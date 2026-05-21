@@ -76,3 +76,30 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Floating wish bubble animation — used by FloatingWishesHero. */
+@keyframes hg-float {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(-1deg);
+  }
+  33% {
+    transform: translateY(-8px) translateX(4px) rotate(0.5deg);
+  }
+  66% {
+    transform: translateY(4px) translateX(-4px) rotate(1.2deg);
+  }
+}
+
+.hg-wish-bubble {
+  animation-name: hg-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hg-wish-bubble {
+    animation: none;
+  }
+}

@@ -5,10 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { InviteCard } from "@/components/account/invite-card";
 import { ProfileForm } from "@/components/account/profile-form";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
+import { Sparkles } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import { DataControls } from "@/components/profile/data-controls";
 import { ModeSwitcher } from "@/components/profile/mode-switcher";
 import { EmailPrefsCard } from "@/components/profile/email-prefs";
 import { TutorialToggle } from "@/components/settings/tutorial-toggle";
+import { getSubscription, isPro } from "@/lib/subscription/get";
 import { DEFAULT_PREFS, type EmailPrefs } from "@/lib/preferences/schema";
 import { requireAccount, requireUser } from "@/lib/auth/server";
 import { getAccountDetail, isPartnerLinked } from "@/lib/account/queries";
@@ -56,6 +61,9 @@ export default async function SettingsPage() {
     ...DEFAULT_PREFS,
     ...((prefsRow as { email_prefs?: Partial<EmailPrefs> } | null)?.email_prefs ?? {}),
   };
+
+  const subscription = await getSubscription(user.id);
+  const userIsPro = isPro(subscription);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -137,6 +145,38 @@ export default async function SettingsPage() {
       />
 
       <EmailPrefsCard current={emailPrefs} />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle className="inline-flex items-center gap-2">
+                <Sparkles className="text-primary h-4 w-4" />
+                Subscription
+              </CardTitle>
+              <CardDescription>
+                {userIsPro ? "Bạn đang ở gói Pro 💝" : "Đang ở Free — xem Pro mở khoá gì thêm"}
+              </CardDescription>
+            </div>
+            <span
+              className={
+                userIsPro
+                  ? "bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-medium"
+                  : "bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium"
+              }
+            >
+              {userIsPro ? "PRO" : "FREE"}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant={userIsPro ? "outline" : "default"}>
+            <Link href="/settings/subscription">
+              {userIsPro ? "Xem chi tiết" : "Xem Pro 29k/tháng"}
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
